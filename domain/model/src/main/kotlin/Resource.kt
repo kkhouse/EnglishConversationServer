@@ -12,7 +12,7 @@ sealed class Resource<out T> {
             is Success -> try {
                 Success(f(this.data))
             } catch (e: Exception) {
-                Failure(AppError.IllegalError("Resource map function throws exception"))
+                Failure(AppError.UnKnownError("Resource map function throws exception"))
             }
             is Failure -> Failure(this.error)
 
@@ -24,7 +24,7 @@ sealed class Resource<out T> {
     fun <U> flatMap(f: (T) -> Resource<U>): Resource<U> {
         return when(this) {
             is Success -> {
-                try { f(this.data) } catch (e: Exception) {Failure(AppError.IllegalError("flatmapException")) }
+                try { f(this.data) } catch (e: Exception) {Failure(AppError.UnKnownError("flatmapException")) }
             }
             is Failure -> Failure(this.error)
         }
@@ -51,7 +51,7 @@ sealed class Resource<out T> {
 
     /*　Successの値が条件にマッチするか判定する。FalseのばあいはFailuerを返却する */
     fun filter(
-        error: AppError = AppError.IllegalError("Condition not match"),
+        error: AppError = AppError.UnKnownError("Condition not match"),
         p: (T) -> Boolean
     ) : Resource<T> {
         return flatMap {
@@ -69,7 +69,7 @@ sealed class Resource<out T> {
                 f(this.data)
                 this
             }catch (e: Exception) {
-                Failure(error = AppError.IllegalError("${e.message}"))
+                Failure(error = AppError.UnKnownError("${e.message}"))
             }
             is Failure -> Failure(this.error)
 
@@ -81,7 +81,7 @@ sealed class Resource<out T> {
             is Success -> try {
                 Success(f(this.data))
             } catch (e: Exception) {
-                Failure(AppError.IllegalError("Resource map function throws exception"))
+                Failure(AppError.UnKnownError("Resource map function throws exception"))
             }
             is Failure -> Failure(this.error)
         }
@@ -90,7 +90,7 @@ sealed class Resource<out T> {
     suspend fun <U> flatMapAsync(f: suspend (T) -> Resource<U>): Resource<U> {
         return when(this) {
             is Success -> {
-                try { f(this.data) } catch (e: Exception) {Failure(AppError.IllegalError("flatmapException")) }
+                try { f(this.data) } catch (e: Exception) {Failure(AppError.UnKnownError("flatmapException")) }
             }
             is Failure -> Failure(this.error)
 
@@ -112,7 +112,7 @@ sealed class Resource<out T> {
                 f(this.data)
                 this
             }catch (e: Exception) {
-                Failure(error = AppError.IllegalError("${e.message}"))
+                Failure(error = AppError.UnKnownError("${e.message}"))
             }
             is Failure -> Failure(this.error)
 
@@ -132,7 +132,7 @@ sealed class Resource<out T> {
                 else -> onLoading()
             }
             this
-        }catch(e: Exception) { Failure(AppError.IllegalError(""))}
+        }catch(e: Exception) { Failure(AppError.UnKnownError(""))}
     }
 
     /* Resourceの文脈を維持させたい時などに使用 */
@@ -140,14 +140,14 @@ sealed class Resource<out T> {
         return try {
             f()
             this
-        } catch(e: Exception) { Failure(AppError.IllegalError(""))}
+        } catch(e: Exception) { Failure(AppError.UnKnownError(""))}
     }
 
     suspend fun effectAsync(f: suspend () -> Unit) : Resource<T> {
         return try {
             f()
             this
-        } catch (e: Exception) { Failure(AppError.IllegalError(""))}
+        } catch (e: Exception) { Failure(AppError.UnKnownError(""))}
     }
 
     fun getDataOrNull(): T? {
@@ -197,7 +197,7 @@ sealed class Resource<out T> {
             return try {
                 Success(f())
             } catch (e: Exception) {
-                Failure(AppError.IllegalError(""))
+                Failure(AppError.UnKnownError("Resource.of catch Exception ${e.message}"))
             }
         }
 
@@ -205,7 +205,7 @@ sealed class Resource<out T> {
             return try {
                 Success(f())
             } catch (e: Exception) {
-                Failure(AppError.IllegalError(""))
+                Failure(AppError.UnKnownError("Resource.ofAsync catch Exception ${e.message}"))
             }
         }
 
@@ -220,7 +220,7 @@ sealed class Resource<out T> {
     }
 
 
-    fun <A> Resource<A?>.notNull() : Resource<A> = ifNull(Resource.Failure(AppError.IllegalError("data is null")))
+    fun <A> Resource<A?>.notNull() : Resource<A> = ifNull(Resource.Failure(AppError.UnKnownError("data is null")))
 
     fun <A> Resource<A?>.ifNull(ra: Resource<A>) : Resource<A> {
         return when(this) {
@@ -254,9 +254,4 @@ suspend fun <A> Resource<A>.forEachAsync(
         is Resource.Success -> onSuccess(this.data)
         is Resource.Failure -> onFailure(this.error)
     }
-}
-
-sealed class AppError {
-    object HogeError : AppError()
-    data class IllegalError(val message: String) : AppError()
 }

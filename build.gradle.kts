@@ -1,4 +1,5 @@
 val ktor_version: String by project
+val koin_version: String = "3.4.0"
 
 plugins {
     kotlin("jvm") version "1.8.20"
@@ -21,6 +22,11 @@ repositories {
 
 dependencies {
     implementation(project(":application"))
+    implementation(project(":domain:model"))
+    implementation(project(":domain:adapters"))
+    implementation(project(":infrastructure:repository"))
+    implementation(project(":infrastructure:network"))
     implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
+    implementation("io.insert-koin:koin-core:$koin_version")
 }
