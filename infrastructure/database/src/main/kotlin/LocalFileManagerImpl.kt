@@ -1,3 +1,4 @@
+import org.jaudiotagger.audio.AudioFileIO
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -14,14 +15,14 @@ class LocalFileManagerImpl (
     }
 
     override fun saveFile(byteArray: ByteArray, filename: String): Result<Unit> {
-        val filePath = Path(".").absolutePathString() + SAVE_LOCATION
+        val filePath = Path("").absolutePathString() + SAVE_LOCATION
         return runCatching {
             Files.write(Paths.get(filePath, filename), byteArray)
         }
     }
 
     override fun deleteFile(fileName: String): Result<Unit> {
-        val filePath = Path(".").absolutePathString() + SAVE_LOCATION
+        val filePath = Path("").absolutePathString() + SAVE_LOCATION
         return runCatching {
             Files.delete(Paths.get(filePath, fileName))
         }
@@ -31,14 +32,14 @@ class LocalFileManagerImpl (
     TODO 抽象的にかけないか？
      */
     override fun analyzeFileData(filename: String): Result<FlacData> {
-        val filePath = Path(".").absolutePathString() + SAVE_LOCATION + "/$filename"
+        val filePath = Path("").absolutePathString() + SAVE_LOCATION + filename
         return runCatching {
             val file = File(filePath)
-            val audioFormat = AudioSystem.getAudioInputStream(file).format
+            val audioFile = AudioFileIO.read(file)
             val data = FlacData(
                 fileName = filename,
-                sampleRate = audioFormat.sampleRate.toInt(),
-                chanelCount = audioFormat.channels,
+                sampleRate = audioFile.audioHeader.sampleRateAsNumber,
+                chanelCount = audioFile.audioHeader.channels.toInt(),
                 localFilePath = filePath
             )
             println("Debug: analyzeFileData is $data")

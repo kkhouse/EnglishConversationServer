@@ -50,7 +50,7 @@ class SpeechToTextUseCaseImpl(
     }
 
     override suspend fun handleFileUploaded(flacByteArray: ByteArray): Resource<SpeechToTextResult> {
-        val fileName = UUID.randomUUID().toString() // NOTE : File名はUUID
+        val fileName = UUID.randomUUID().toString() + ".flac" // NOTE : File名はUUID
         val flacData = FlacData(fileName = fileName)
         return speechToTextRepository.writeFlacFile(byteArray = flacByteArray, fileName = flacData)
             .flatMap(speechToTextRepository::uploadFlacFileToGCP)

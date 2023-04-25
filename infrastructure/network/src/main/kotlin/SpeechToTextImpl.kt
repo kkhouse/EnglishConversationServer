@@ -11,12 +11,12 @@ import java.nio.file.Paths
 
 class SpeechToTextImpl (
     private val client: SpeechClient,
-    private val config: RecognitionConfig,
     private val storage: Storage
 ): SpeechToText {
 
     companion object {
         // The ID of your GCS bucket
+        // TODO これはGlobalからとったほうが良さそう？　あんま調べてない
         const val bucketName = "english-conversation-backet"
 
         const val projectId = "english-conversation-app"
@@ -26,6 +26,12 @@ class SpeechToTextImpl (
         val audio = RecognitionAudio.newBuilder()
             .setContent(byte)
 //            .setUri("gs://cloud-samples-tests/speech/brooklyn.flac")
+            .build()
+        val config = RecognitionConfig.newBuilder()
+            .setEncoding(RecognitionConfig.AudioEncoding.FLAC)
+            .setSampleRateHertz(24000)
+            .setLanguageCode("en-US")
+            .setAudioChannelCount(1)
             .build()
         return runCatching {
             val results = client.recognize(config, audio)
@@ -69,8 +75,15 @@ class SpeechToTextImpl (
     }
 
     override fun postSpeechToText(flacData: FlacData): Result<TranscriptText> {
+        val uri = "gs://$bucketName/${flacData.fileName}"
         val audio = RecognitionAudio.newBuilder()
-            .setUri("gs://$projectId/$bucketName/${flacData.fileName}")
+            .setUri(uri)
+            .build()
+        val config = RecognitionConfig.newBuilder()
+            .setEncoding(RecognitionConfig.AudioEncoding.FLAC)
+            .setSampleRateHertz(flacData.sampleRate)
+            .setLanguageCode("en-US")
+            .setAudioChannelCount(flacData.chanelCount)
             .build()
         return runCatching {
             val results = client.recognize(config, audio)

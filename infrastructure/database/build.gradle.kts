@@ -13,4 +13,5 @@ repositories {
 dependencies {
     implementation(project(":domain:model"))
     implementation("io.insert-koin:koin-core:$koin_version")
+    implementation("net.jthink:jaudiotagger:3.0.1")
 }

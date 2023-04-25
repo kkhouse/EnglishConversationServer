@@ -11,15 +11,7 @@ import org.koin.dsl.module
 val networkModule = module {
     single { SpeechClient.create() }
     single {
-        RecognitionConfig.newBuilder()
-            .setEncoding(RecognitionConfig.AudioEncoding.FLAC)
-            .setSampleRateHertz(24000)
-            .setLanguageCode("en-US")
-            .setAudioChannelCount(1)
-            .build()
-    }
-    single {
        StorageOptions.newBuilder().setProjectId(projectId).build().service
     }
-   single<SpeechToText> { SpeechToTextImpl(get(), get(), get()) }
+   single<SpeechToText> { SpeechToTextImpl(get(), get()) }
 }

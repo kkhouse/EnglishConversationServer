@@ -26,6 +26,7 @@ dependencies {
     implementation(project(":domain:adapters"))
     implementation(project(":infrastructure:repository"))
     implementation(project(":infrastructure:network"))
+    implementation(project(":infrastructure:database"))
     implementation("io.ktor:ktor-server-core-jvm:$ktor_version")
     implementation("io.ktor:ktor-server-netty-jvm:$ktor_version")
     implementation("io.insert-koin:koin-core:$koin_version")
