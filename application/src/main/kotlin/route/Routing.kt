@@ -1,5 +1,6 @@
 package route
 
+import Audio
 import ByteFlacData
 import Resource
 import SpeechToTextResult
@@ -9,6 +10,7 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.Serializable
 import org.koin.java.KoinJavaComponent
 import usecase.SpeechToTextUseCase
 
@@ -25,21 +27,37 @@ fun Application.configureRouting() {
         }
 
         post("/upload") {
-            when(ContentType.Audio.Any.contentType == call.request.contentType().contentType) {
-                true -> useCase.handleFileUploaded(flacByteArray = call.receive<ByteArray>())
-                    .forEachAsync(
-                        onSuccess = { resp -> call.respond(HttpStatusCode.OK, resp) },
-                        onFailure = { error ->
-                            when(error) { // TODO
-                                is TextToSpeechError.InvalidChunk -> call.respond(HttpStatusCode.NotFound, "multiple chunk")
-                                is TextToSpeechError.InvalidResultText -> call.respond(HttpStatusCode.NotFound, "text empty")
-                                is AppError.UnKnownError -> call.respond(HttpStatusCode.NotFound, "unknownError")
-                            }
+//            when(ContentType.Audio.Any.contentType == call.request.contentType().contentType) {
+//                true -> useCase.handleFileUploaded(flacByteArray = call.receive<ByteArray>())
+//                    .forEachAsync(
+//                        onSuccess = { resp -> call.respond(HttpStatusCode.OK, resp) },
+//                        onFailure = { error ->
+//                            when(error) { // TODO
+//                                is TextToSpeechError.InvalidChunk -> call.respond(HttpStatusCode.NotFound, "multiple chunk")
+//                                is TextToSpeechError.InvalidResultText -> call.respond(HttpStatusCode.NotFound, "text empty")
+//                                is AppError.UnKnownError -> call.respond(HttpStatusCode.NotFound, "unknownError")
+//                            }
+//
+//                        }
+//                    )
+//                else -> call.respond(HttpStatusCode.UnsupportedMediaType, "UnSupportedMediaType")
+//            }
 
+            // TODO
+            val audio = call.receive<Audio>()
+
+            useCase.handleFileUploaded(flacByteArray = audio.data)
+                .forEachAsync(
+                    onSuccess = { resp -> call.respond(HttpStatusCode.OK, resp) },
+                    onFailure = { error ->
+                        when(error) {
+                            is TextToSpeechError.InvalidChunk -> call.respond(HttpStatusCode.NotFound, "multiple chunk")
+                            is TextToSpeechError.InvalidResultText -> call.respond(HttpStatusCode.NotFound, "text empty")
+                            is AppError.UnKnownError -> call.respond(HttpStatusCode.NotFound, "unknownError")
                         }
-                    )
-                else -> call.respond(HttpStatusCode.UnsupportedMediaType, "UnSupportedMediaType")
-            }
+
+                    }
+                )
         }
     }
 }

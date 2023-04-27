@@ -11,7 +11,7 @@ class LocalFileManagerImpl (
 ): LocalFileManager {
 
     companion object {
-        const val SAVE_LOCATION = "/infrastructure/repository/src/main/resources/"
+        const val SAVE_LOCATION = "/infrastructure/database/src/main/resources/"
     }
 
     override fun saveFile(byteArray: ByteArray, filename: String): Result<Unit> {
