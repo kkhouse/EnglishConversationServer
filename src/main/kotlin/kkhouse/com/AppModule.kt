@@ -1,9 +1,9 @@
 package kkhouse.com
 
-import di.applicationModule
-import di.databaseModule
-import di.networkModule
-import di.repositoryModule
+import kkhouse.com.di.applicationModule
+import kkhouse.com.di.databaseModule
+import kkhouse.com.di.networkModule
+import kkhouse.com.di.repositoryModule
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 

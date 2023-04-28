@@ -1,0 +1,49 @@
+CREATE TABLE user (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL
+);
+
+CREATE TABLE chat_room (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+CREATE TABLE chat_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    chat_room_id INTEGER NOT NULL,
+    role INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    FOREIGN KEY (chat_room_id) REFERENCES chat_room(id)
+);
+
+queryMessagesAndRolesForUserInChatRoom:
+SELECT message, role, chat_log.id
+FROM chat_log
+JOIN chat_room ON chat_log.chat_room_id = chat_room.id
+WHERE chat_room.user_id = ? AND chat_log.chat_room_id = ?;
+
+insertChatLogForUserInChatRoom:
+INSERT INTO chat_log (chat_room_id, role, message, created_at)
+VALUES (?, ?, ?, ?);
+
+createUser:
+INSERT INTO user (user_id)
+VALUES (?);
+
+createChatRoomForUser:
+INSERT INTO chat_room (user_id)
+VALUES (?);
+
+queryChatRoomsForUser:
+SELECT * FROM chat_room
+WHERE user_id = ?;
+
+deleteUserAndRelatedData:
+DELETE FROM chat_log
+WHERE chat_room_id IN (SELECT id FROM chat_room WHERE user_id = ?);
+DELETE FROM chat_room
+WHERE user_id = ?;
+DELETE FROM user
+WHERE id = ?;
