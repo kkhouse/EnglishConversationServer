@@ -42,11 +42,11 @@ class SpeechToTextRepositoryImpl(
     }
 
     override fun uploadFlacFileToGCP(flacData: FlacData): Resource<FlacData> {
-        return speechToText.uploadFlatFileToStorage(flacData).toResource()
+        return speechToText.uploadFlacFileOnGCP(flacData).toResource()
     }
 
     override fun deleteFlacFileToGCP(flacData: FlacData): Resource<Unit> {
-        return speechToText.deleteFlatFileToStorage(flacData).toResource()
+        return speechToText.deleteFlacFileOnGCP(flacData).toResource()
     }
 
     override fun recognizeSpeech(flacData: FlacData): Resource<TranscriptText> {

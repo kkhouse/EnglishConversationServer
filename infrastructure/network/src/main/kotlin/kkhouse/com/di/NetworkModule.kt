@@ -8,6 +8,8 @@ import kkhouse.com.SpeechToTextImpl
 import kkhouse.com.SpeechToTextImpl.Companion.projectId
 import com.google.cloud.speech.v1.SpeechClient
 import com.google.cloud.storage.StorageOptions
+import kkhouse.com.handler.RequestResponseHandler
+import kkhouse.com.handler.RequestResponseHandlerImpl
 import org.koin.dsl.module
 
 val networkModule = module {
@@ -23,7 +25,8 @@ val networkModule = module {
             )
         )
     }
+    single<RequestResponseHandler>{ RequestResponseHandlerImpl() }
    single<SpeechToText> {
-       SpeechToTextImpl(get(), get(), get())
+       SpeechToTextImpl(get(), get(), get(), get())
    }
 }

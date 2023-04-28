@@ -34,4 +34,6 @@ interface SpeechToTextRepository {
     suspend fun findChatRoomsForUser(userId: String): Resource<List<ChatRoomId>>
 
     suspend fun findChatHistory(userId: String, chatRoomId: Int): Resource<ChatData>
+
+    fun postConversation(newContent: Conversation): Resource<Conversation>
 }

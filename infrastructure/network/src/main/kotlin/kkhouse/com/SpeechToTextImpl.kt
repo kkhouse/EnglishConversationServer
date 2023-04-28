@@ -4,9 +4,6 @@ package kkhouse.com
 
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatCompletion
-import com.aallam.openai.api.chat.ChatCompletionRequest
-import com.aallam.openai.api.chat.ChatMessage
-import com.aallam.openai.api.model.ModelId
 import com.aallam.openai.client.OpenAI
 import com.google.cloud.speech.v1.RecognitionAudio
 import com.google.cloud.speech.v1.RecognitionConfig
@@ -18,6 +15,7 @@ import com.google.protobuf.ByteString
 import kkhouse.com.exceptions.EmptyTextException
 import kkhouse.com.exceptions.MultiChunkException
 import kkhouse.com.exceptions.MultiResultException
+import kkhouse.com.handler.RequestResponseHandler
 import kkhouse.com.repository.TranscriptText
 import kkhouse.com.speech.Conversation
 import kkhouse.com.speech.FlacData
@@ -28,7 +26,7 @@ class SpeechToTextImpl (
     private val client: SpeechClient,
     private val storage: Storage,
     private val openAi: OpenAI,
-
+    private val handler: RequestResponseHandler
 ): SpeechToText {
 
     companion object {
@@ -60,7 +58,7 @@ class SpeechToTextImpl (
         }
     }
 
-    override fun uploadFlatFileToStorage(flacData: FlacData): Result<FlacData> {
+    override fun uploadFlacFileOnGCP(flacData: FlacData): Result<FlacData> {
         return runCatching {
             val blobId = BlobId.of(bucketName, flacData.fileName)
             val blobInfo = BlobInfo.newBuilder(blobId).build()
@@ -79,7 +77,7 @@ class SpeechToTextImpl (
         }
     }
 
-    override fun deleteFlatFileToStorage(flacData: FlacData): Result<Unit> {
+    override fun deleteFlacFileOnGCP(flacData: FlacData): Result<Unit> {
         return runCatching {
             val blobId = BlobId.of(bucketName, flacData.fileName)
             storage.delete(blobId)
@@ -111,20 +109,7 @@ class SpeechToTextImpl (
 
     override suspend fun postCompletion(newMessage: String, conversation: List<Conversation>?): Result<ChatCompletion> {
         return runCatching {
-            conversation?.let {
-                // nullでなければ普通にPost
-                openAi.chatCompletion(chatHandler.createRequest(it))
-            } ?: {
-                // nullの場合、初回
-                openAi.chatCompletion(
-                    request = ChatCompletionRequest(
-                        model = ModelId("gpt-3.5-turbo"),
-                        messages = listOf(
-                            ChatMessage()
-                        )
-                    )
-                )
-            }
+            openAi.chatCompletion(handler.createChatRequest(newMessage, conversation))
         }
     }
 }
