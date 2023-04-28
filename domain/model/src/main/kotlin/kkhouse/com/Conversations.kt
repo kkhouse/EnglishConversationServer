@@ -1,6 +1,9 @@
 package kkhouse.com
 
 import kotlinx.serialization.Serializable
+
+typealias ChatRoomId = Int
+
 @Serializable
 data class Conversation(
     val chatID: Int,

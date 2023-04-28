@@ -1,5 +1,6 @@
 package kkhouse.com.persistent
 
+import kkhouse.com.ChatRoomId
 import kkhousecom.ChatLogShemeQueries
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 import kotlinx.coroutines.CoroutineDispatcher

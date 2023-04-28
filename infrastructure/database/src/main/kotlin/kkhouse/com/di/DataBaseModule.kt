@@ -11,15 +11,14 @@ import org.koin.dsl.module
 
 val databaseModule = module {
     single<LocalFileManager> { LocalFileManagerImpl() }
-    single {
-        JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY).apply {
-            ChatLogDataBase.Schema.create(this)
-        }
-    }
-    single { ChatLogDataBase(get()) }
     single<ChatDataBase> {
         ChatDataBaseImpl(
-            get(),
-            Dispatchers.IO)
+            ChatLogDataBase(
+                JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY).apply {
+                    ChatLogDataBase.Schema.create(this)
+                }
+            ).chatLogShemeQueries,
+            Dispatchers.IO
+        )
     }
 }

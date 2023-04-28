@@ -1,11 +1,9 @@
 package kkhouse.com.repository
 
-import kkhouse.com.ChatData
-import kkhouse.com.Conversation
-import kkhouse.com.FlacData
-import kkhouse.com.Resource
+import kkhouse.com.*
 
 typealias TranscriptText = String
+
 interface SpeechToTextRepository {
     fun oldRecognizeSpeech(flacBase64: String): Result<TranscriptText> // TODO 削除
 
@@ -19,13 +17,17 @@ interface SpeechToTextRepository {
 
     fun recognizeSpeech(flacData: FlacData): Resource<TranscriptText>
 
-    suspend fun createUser(userId: Int): Resource<Unit>
+    suspend fun createUserAndChatRoom(userId: Int): Resource<Unit>
+
+    suspend fun createChatRoom(userId: Int): Resource<Unit>
 
     suspend fun writeConversation(
         userId: Int,
         chatRoomId: Int,
         conversation: Conversation
     ): Resource<ChatData>
+
+    suspend fun findChatRoomsForUser(userId: Int): Resource<List<ChatRoomId>>
 
     suspend fun findChatHistory(userId: Int, chatRoomId: Int): Resource<ChatData>
 }

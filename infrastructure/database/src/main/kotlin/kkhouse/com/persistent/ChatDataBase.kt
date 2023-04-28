@@ -1,8 +1,8 @@
 package kkhouse.com.persistent
 
+import kkhouse.com.ChatRoomId
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 
-typealias ChatRoomId = Int
 interface ChatDataBase {
 
     /*

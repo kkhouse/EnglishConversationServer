@@ -125,17 +125,14 @@ sealed class Resource<out T> {
     suspend fun tapEachAsync(
         onSuccess : suspend (T) -> Unit = {},
         onFailure : suspend (AppError) -> Unit = {},
-        onLoading : suspend () -> Unit = {}
     ) : Resource<T> {
         return try {
             when(this) {
                 is Success ->onSuccess(this.data)
                 is Failure -> onFailure(this.error)
-                else -> onLoading()
             }
             this
-        }catch(e: Exception) { Failure(AppError.UnKnownError(""))
-        }
+        } catch(e: Exception) { Failure(AppError.UnKnownError("")) }
     }
 
     /* Resourceの文脈を維持させたい時などに使用 */
