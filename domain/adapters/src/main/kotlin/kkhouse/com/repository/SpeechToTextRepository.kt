@@ -1,6 +1,7 @@
 package kkhouse.com.repository
 
 import kkhouse.com.ChatData
+import kkhouse.com.Conversation
 import kkhouse.com.FlacData
 import kkhouse.com.Resource
 
@@ -18,9 +19,13 @@ interface SpeechToTextRepository {
 
     fun recognizeSpeech(flacData: FlacData): Resource<TranscriptText>
 
-    suspend fun createUser(userId: Int): Resource<ChatData>
+    suspend fun createUser(userId: Int): Resource<Unit>
 
-    suspend fun writeConversation(userId: Int, chatRoomId: Int, message: String): Resource<ChatData>
+    suspend fun writeConversation(
+        userId: Int,
+        chatRoomId: Int,
+        conversation: Conversation
+    ): Resource<ChatData>
 
     suspend fun findChatHistory(userId: Int, chatRoomId: Int): Resource<ChatData>
 }

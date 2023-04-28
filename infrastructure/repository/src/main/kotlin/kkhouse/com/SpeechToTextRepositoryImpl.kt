@@ -1,4 +1,5 @@
 package kkhouse.com
+import kkhouse.com.Role.Companion.getRowValue
 import kkhouse.com.file.LocalFileManager
 import kkhouse.com.mapping.mapConversation
 import kkhouse.com.persistent.ChatDataBase
@@ -38,6 +39,40 @@ class SpeechToTextRepositoryImpl(
 
     override fun recognizeSpeech(flacData: FlacData): Resource<TranscriptText> {
         return speechToText.postSpeechToText(flacData).toResource()
+    }
+
+    override suspend fun createUser(userId: Int): Resource<Unit> {
+        return chatDatabase.createUser(userId.toLong()).toResource()
+    }
+
+    override suspend fun writeConversation(
+        userId: Int,
+        chatRoomId: Int,
+        conversation: Conversation,
+    ): Resource<ChatData> {
+        return chatDatabase.insertChatLogForUserInChatRoom(
+            chatRoomId = chatRoomId,
+            role = conversation.role.getRowValue(),
+            message = conversation.message,
+            createdAt = 0 // TODO
+        ).fold(
+            onSuccess = {
+                chatDatabase.queryMessagesAndRolesForUserInChatRoom(userId, chatRoomId).map {
+                    ChatData(
+                        userId = userId,
+                        chatRoomId = chatRoomId,
+                        conversation = it.map(QueryMessagesAndRolesForUserInChatRoom::mapConversation),
+                        errorCode = null
+                    )
+                }.fold(
+                    onSuccess = { Resource.of { it } },
+                    onFailure = { Resource.Failure(AppError.UnKnownError(it.message ?:"")) } // TODO
+                 )
+            },
+            onFailure = {
+                Resource.Failure(AppError.UnKnownError(it.message ?: "")) // TODO
+            }
+        )
     }
 
     override suspend fun findChatHistory(userId: Int, chatRoomId: Int): Resource<ChatData> {

@@ -18,6 +18,13 @@ enum class Role {
                 else -> throw IllegalStateException("Unexpected role value from database")
             }
         }
+
+        fun Role.getRowValue(): Int {
+            return when(this) {
+                Assistant -> 0
+                User -> 1
+            }
+        }
     }
 }
 
