@@ -1,5 +1,7 @@
-package kkhouse.com
+package kkhouse.com.speech
 
+import kkhouse.com.utils.AppError
+import kkhouse.com.utils.TextToSpeechError
 import kotlinx.serialization.Serializable
 
 @Serializable

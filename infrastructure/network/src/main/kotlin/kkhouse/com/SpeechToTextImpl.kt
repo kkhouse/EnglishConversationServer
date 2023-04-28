@@ -1,5 +1,13 @@
+@file:OptIn(BetaOpenAI::class)
+
 package kkhouse.com
 
+import com.aallam.openai.api.BetaOpenAI
+import com.aallam.openai.api.chat.ChatCompletion
+import com.aallam.openai.api.chat.ChatCompletionRequest
+import com.aallam.openai.api.chat.ChatMessage
+import com.aallam.openai.api.model.ModelId
+import com.aallam.openai.client.OpenAI
 import com.google.cloud.speech.v1.RecognitionAudio
 import com.google.cloud.speech.v1.RecognitionConfig
 import com.google.cloud.speech.v1.SpeechClient
@@ -11,17 +19,20 @@ import kkhouse.com.exceptions.EmptyTextException
 import kkhouse.com.exceptions.MultiChunkException
 import kkhouse.com.exceptions.MultiResultException
 import kkhouse.com.repository.TranscriptText
+import kkhouse.com.speech.Conversation
+import kkhouse.com.speech.FlacData
 import java.nio.file.Paths
 
 
 class SpeechToTextImpl (
     private val client: SpeechClient,
-    private val storage: Storage
+    private val storage: Storage,
+    private val openAi: OpenAI,
+
 ): SpeechToText {
 
     companion object {
         // The ID of your GCS bucket
-        // TODO これはGlobalからとったほうが良さそう？　あんま調べてない
         const val bucketName = "english-conversation-backet"
 
         const val projectId = "english-conversation-app"
@@ -49,9 +60,6 @@ class SpeechToTextImpl (
         }
     }
 
-    /*
-    TODO UTできなそう
-     */
     override fun uploadFlatFileToStorage(flacData: FlacData): Result<FlacData> {
         return runCatching {
             val blobId = BlobId.of(bucketName, flacData.fileName)
@@ -97,6 +105,25 @@ class SpeechToTextImpl (
                 results.resultsList[0].alternativesCount != 1 -> throw MultiChunkException(results.toString())
                 results.resultsList[0].alternativesList[0].transcript.isEmpty() -> throw EmptyTextException(results.toString())
                 else -> results.resultsList[0].alternativesList[0].transcript
+            }
+        }
+    }
+
+    override suspend fun postCompletion(newMessage: String, conversation: List<Conversation>?): Result<ChatCompletion> {
+        return runCatching {
+            conversation?.let {
+                // nullでなければ普通にPost
+                openAi.chatCompletion(chatHandler.createRequest(it))
+            } ?: {
+                // nullの場合、初回
+                openAi.chatCompletion(
+                    request = ChatCompletionRequest(
+                        model = ModelId("gpt-3.5-turbo"),
+                        messages = listOf(
+                            ChatMessage()
+                        )
+                    )
+                )
             }
         }
     }

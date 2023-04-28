@@ -1,6 +1,6 @@
 package kkhouse.com.file
 
-import kkhouse.com.FlacData
+import kkhouse.com.speech.FlacData
 
 interface LocalFileManager {
     fun saveFile(byteArray: ByteArray, filename: String): Result<Unit>

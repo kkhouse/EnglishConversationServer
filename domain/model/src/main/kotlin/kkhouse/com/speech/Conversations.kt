@@ -1,4 +1,4 @@
-package kkhouse.com
+package kkhouse.com.speech
 
 import kotlinx.serialization.Serializable
 
@@ -33,7 +33,7 @@ enum class Role {
 
 @Serializable
 data class ChatData(
-    val userId: Int? = null,
+    val userId: String? = null,
     val chatRoomId: Int? = null,
     val conversation: List<Conversation>? = null,
     val errorCode: Int? = null

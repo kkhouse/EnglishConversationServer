@@ -1,17 +1,17 @@
 package kkhouse.com.route
 
-import kkhouse.com.Audio
-import kkhouse.com.ByteFlacData
-import kkhouse.com.Resource
-import kkhouse.com.SpeechToTextResult
-import kkhouse.com.forEachAsync
+import kkhouse.com.speech.Audio
+import kkhouse.com.speech.ByteFlacData
+import kkhouse.com.utils.Resource
+import kkhouse.com.speech.SpeechToTextResult
+import kkhouse.com.utils.forEachAsync
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kkhouse.com.AppError
-import kkhouse.com.TextToSpeechError
+import kkhouse.com.utils.AppError
+import kkhouse.com.utils.TextToSpeechError
 import org.koin.java.KoinJavaComponent
 import kkhouse.com.usecase.SpeechToTextUseCase
 

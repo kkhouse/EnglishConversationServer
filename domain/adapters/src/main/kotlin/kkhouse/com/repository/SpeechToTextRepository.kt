@@ -1,6 +1,10 @@
 package kkhouse.com.repository
 
-import kkhouse.com.*
+import kkhouse.com.speech.ChatData
+import kkhouse.com.speech.ChatRoomId
+import kkhouse.com.speech.Conversation
+import kkhouse.com.speech.FlacData
+import kkhouse.com.utils.Resource
 
 typealias TranscriptText = String
 
@@ -17,17 +21,17 @@ interface SpeechToTextRepository {
 
     fun recognizeSpeech(flacData: FlacData): Resource<TranscriptText>
 
-    suspend fun createUserAndChatRoom(userId: Int): Resource<Unit>
+    suspend fun createUserAndChatRoom(userId: String): Resource<Unit>
 
-    suspend fun createChatRoom(userId: Int): Resource<Unit>
+    suspend fun createChatRoom(userId: String): Resource<Unit>
 
     suspend fun writeConversation(
-        userId: Int,
+        userId: String,
         chatRoomId: Int,
         conversation: Conversation
     ): Resource<ChatData>
 
-    suspend fun findChatRoomsForUser(userId: Int): Resource<List<ChatRoomId>>
+    suspend fun findChatRoomsForUser(userId: String): Resource<List<ChatRoomId>>
 
-    suspend fun findChatHistory(userId: Int, chatRoomId: Int): Resource<ChatData>
+    suspend fun findChatHistory(userId: String, chatRoomId: Int): Resource<ChatData>
 }

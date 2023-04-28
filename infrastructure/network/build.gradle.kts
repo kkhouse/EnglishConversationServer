@@ -1,5 +1,6 @@
 val ktor_version: String by project
 val koin_version: String = "3.4.0"
+val openai: String = "3.2.0"
 
 plugins {
     kotlin("jvm") version "1.8.20"
@@ -26,4 +27,5 @@ dependencies {
     implementation("commons-codec:commons-codec:1.15")
     implementation(platform("com.google.cloud:libraries-bom:26.13.0"))
     implementation("com.google.cloud:google-cloud-storage")
+    implementation("com.aallam.openai:openai-client:$openai")
 }

@@ -1,6 +1,6 @@
 package kkhouse.com.persistent
 
-import kkhouse.com.ChatRoomId
+import kkhouse.com.speech.ChatRoomId
 import kkhousecom.ChatLogShemeQueries
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 import kotlinx.coroutines.CoroutineDispatcher
@@ -10,7 +10,7 @@ class ChatDataBaseImpl(
     private val queries: ChatLogShemeQueries,
     private val dispatcher: CoroutineDispatcher
 ): ChatDataBase {
-    override suspend fun queryChatRoomsForUser(userId: Long): Result<List<ChatRoomId>> {
+    override suspend fun queryChatRoomsForUser(userId: String): Result<List<ChatRoomId>> {
         return withContext(dispatcher) {
             runCatching {
                 queries.queryChatRoomsForUser(userId).executeAsList().map { it.id.toInt() }
@@ -19,17 +19,17 @@ class ChatDataBaseImpl(
     }
 
     override suspend fun queryMessagesAndRolesForUserInChatRoom(
-        userId: Int,
+        userId: String,
         chatRoomId: Int
     ): Result<List<QueryMessagesAndRolesForUserInChatRoom>> {
         return withContext(dispatcher) {
             runCatching {
-                queries.queryMessagesAndRolesForUserInChatRoom(userId.toLong(), chatRoomId.toLong()).executeAsList()
+                queries.queryMessagesAndRolesForUserInChatRoom(userId, chatRoomId.toLong()).executeAsList()
             }
         }
     }
 
-    override suspend fun createUser(userId: Long): Result<Unit> {
+    override suspend fun createUser(userId: String): Result<Unit> {
         return withContext(dispatcher) {
             runCatching {
                 queries.createUser(userId)
@@ -37,7 +37,7 @@ class ChatDataBaseImpl(
         }
     }
 
-    override suspend fun createChatRoomForUser(userId: Long): Result<Unit> {
+    override suspend fun createChatRoomForUser(userId: String): Result<Unit> {
         return withContext(dispatcher) {
             runCatching {
                 queries.createChatRoomForUser(userId)
@@ -63,7 +63,7 @@ class ChatDataBaseImpl(
         }
     }
 
-    override suspend fun deleteUserAndRelatedData(userId: Long): Result<Unit> {
+    override suspend fun deleteUserAndRelatedData(userId: String): Result<Unit> {
         return withContext(dispatcher) {
             runCatching {
                 queries.deleteUserAndRelatedData(userId)

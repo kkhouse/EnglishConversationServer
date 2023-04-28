@@ -1,5 +1,5 @@
-import kkhouse.com.AppError
-import kkhouse.com.Resource
+import kkhouse.com.utils.AppError
+import kkhouse.com.utils.Resource
 
 /*
 ResultをResourceに変換する

@@ -1,7 +1,7 @@
 package kkhouse.com.mapping
 
-import kkhouse.com.Conversation
-import kkhouse.com.Role.Companion.createRole
+import kkhouse.com.speech.Conversation
+import kkhouse.com.speech.Role.Companion.createRole
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 
 fun QueryMessagesAndRolesForUserInChatRoom.mapConversation(): Conversation {

@@ -1,11 +1,16 @@
 package kkhouse.com
 import combineResult
-import kkhouse.com.Role.Companion.getRowValue
+import kkhouse.com.speech.Role.Companion.getRowValue
 import kkhouse.com.file.LocalFileManager
 import kkhouse.com.mapping.mapConversation
 import kkhouse.com.persistent.ChatDataBase
 import kkhouse.com.repository.SpeechToTextRepository
 import kkhouse.com.repository.TranscriptText
+import kkhouse.com.speech.ChatData
+import kkhouse.com.speech.ChatRoomId
+import kkhouse.com.speech.Conversation
+import kkhouse.com.speech.FlacData
+import kkhouse.com.utils.Resource
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 import toResource
 
@@ -48,18 +53,18 @@ class SpeechToTextRepositoryImpl(
         return speechToText.postSpeechToText(flacData).toResource()
     }
 
-    override suspend fun createUserAndChatRoom(userId: Int): Resource<Unit> {
-        return chatDatabase.createUser(userId.toLong()).combineResult(
-            resultB = chatDatabase.createChatRoomForUser(userId.toLong())
+    override suspend fun createUserAndChatRoom(userId: String): Resource<Unit> {
+        return chatDatabase.createUser(userId).combineResult(
+            resultB = chatDatabase.createChatRoomForUser(userId)
         ) {_, _ -> }.toResource()
     }
 
-    override suspend fun createChatRoom(userId: Int): Resource<Unit> {
-        return chatDatabase.createChatRoomForUser(userId.toLong()).toResource()
+    override suspend fun createChatRoom(userId: String): Resource<Unit> {
+        return chatDatabase.createChatRoomForUser(userId).toResource()
     }
 
     override suspend fun writeConversation(
-        userId: Int,
+        userId: String,
         chatRoomId: Int,
         conversation: Conversation,
     ): Resource<ChatData> {
@@ -79,11 +84,11 @@ class SpeechToTextRepositoryImpl(
         }.toResource()
     }
 
-    override suspend fun findChatRoomsForUser(userId: Int): Resource<List<ChatRoomId>> {
-        return chatDatabase.queryChatRoomsForUser(userId.toLong()).toResource()
+    override suspend fun findChatRoomsForUser(userId: String): Resource<List<ChatRoomId>> {
+        return chatDatabase.queryChatRoomsForUser(userId).toResource()
     }
 
-    override suspend fun findChatHistory(userId: Int, chatRoomId: Int): Resource<ChatData> {
+    override suspend fun findChatHistory(userId: String, chatRoomId: Int): Resource<ChatData> {
         return chatDatabase.queryMessagesAndRolesForUserInChatRoom(userId = userId, chatRoomId = chatRoomId)
             .map { list ->
                 ChatData(

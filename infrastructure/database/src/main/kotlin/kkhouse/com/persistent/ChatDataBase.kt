@@ -1,6 +1,6 @@
 package kkhouse.com.persistent
 
-import kkhouse.com.ChatRoomId
+import kkhouse.com.speech.ChatRoomId
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 
 interface ChatDataBase {
@@ -10,12 +10,12 @@ interface ChatDataBase {
      */
 
     // ユーザに紐づくチャットルームを取得する
-    suspend fun queryChatRoomsForUser(userId: Long): Result<List<ChatRoomId>>
+    suspend fun queryChatRoomsForUser(userId: String): Result<List<ChatRoomId>>
 
 
     // 特定ユーザの１チャットルームないのチャット履歴を全て取得する
     suspend fun queryMessagesAndRolesForUserInChatRoom(
-        userId: Int,
+        userId: String,
         chatRoomId: Int
     ): Result<List<QueryMessagesAndRolesForUserInChatRoom>>
 
@@ -25,10 +25,10 @@ interface ChatDataBase {
     挿入
      */
     // 新規ユーザを作成する
-    suspend fun createUser(userId: Long): Result<Unit>
+    suspend fun createUser(userId: String): Result<Unit>
 
     // 新規チャットルームを作成する
-    suspend fun createChatRoomForUser(userId: Long): Result<Unit>
+    suspend fun createChatRoomForUser(userId: String): Result<Unit>
 
     // チャットルームに1つのメッセージを追加する
     suspend fun insertChatLogForUserInChatRoom(
@@ -42,7 +42,7 @@ interface ChatDataBase {
     削除
      */
     // ユーザとそれに紐づくチャットルーム、履歴を削除する
-    suspend fun deleteUserAndRelatedData(userId: Long): Result<Unit>
+    suspend fun deleteUserAndRelatedData(userId: String): Result<Unit>
 
 
 }

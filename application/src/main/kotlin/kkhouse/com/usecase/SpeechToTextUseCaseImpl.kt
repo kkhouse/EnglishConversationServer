@@ -1,16 +1,16 @@
 package kkhouse.com.usecase
 
-import kkhouse.com.ByteFlacData
-import kkhouse.com.FlacData
-import kkhouse.com.Resource
-import kkhouse.com.SpeechToTextResult
 import kkhouse.com.exceptions.EmptyTextException
 import kkhouse.com.exceptions.MultiChunkException
 import kkhouse.com.exceptions.MultiResultException
-import kkhouse.com.AppError
-import kkhouse.com.TextToSpeechError
 import kkhouse.com.repository.SpeechToTextRepository
-import kkhouse.com.usecase.SpeechToTextUseCase
+import kkhouse.com.speech.ByteFlacData
+import kkhouse.com.speech.ChatData
+import kkhouse.com.speech.FlacData
+import kkhouse.com.speech.SpeechToTextResult
+import kkhouse.com.utils.AppError
+import kkhouse.com.utils.Resource
+import kkhouse.com.utils.TextToSpeechError
 import java.util.*
 
 class SpeechToTextUseCaseImpl(
@@ -68,5 +68,13 @@ class SpeechToTextUseCaseImpl(
                 speechToTextRepository.deleteFlacFile(flacData)
                 speechToTextRepository.deleteFlacFileToGCP(flacData)
             }
+    }
+
+    override suspend fun handleInitialize(userId: String?): Resource<ChatData> {
+        val id = userId ?: UUID.randomUUID().toString()
+        // ユーザ、チャットID作成-> AI応答要求 ->
+        speechToTextRepository.createUserAndChatRoom(id)
+//            .flatMap
+        return TODO()
     }
 }

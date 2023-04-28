@@ -1,4 +1,4 @@
-package kkhouse.com
+package kkhouse.com.speech
 
 import kotlinx.serialization.Serializable
 

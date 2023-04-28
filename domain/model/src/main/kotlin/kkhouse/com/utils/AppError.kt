@@ -1,4 +1,4 @@
-package kkhouse.com
+package kkhouse.com.utils
 
 sealed class AppError {
     data class UnKnownError(val message: String) : AppError()

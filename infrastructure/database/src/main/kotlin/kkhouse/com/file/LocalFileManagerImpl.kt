@@ -1,6 +1,6 @@
 package kkhouse.com.file
 
-import kkhouse.com.FlacData
+import kkhouse.com.speech.FlacData
 import org.jaudiotagger.audio.AudioFileIO
 import java.io.File
 import java.nio.file.Files
