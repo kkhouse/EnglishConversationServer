@@ -19,7 +19,7 @@ import mu.KLogging
 import java.nio.file.Paths
 
 
-class SpeechToTextImpl (
+class SpeechToTextImpl(
     private val client: SpeechClient,
     private val storage: Storage,
     private val openAi: OpenAI,

@@ -11,7 +11,7 @@ typealias ChatRoomId = Int
 @Serializable
 data class InitializedConversation(
     val userId: String?,
-    val appChatRoom: Int
+    val appChatRoom: Int?
 ) {
     fun getRoomId(): ClientChatRoomId {
         return ClientChatRoomId.values().find {

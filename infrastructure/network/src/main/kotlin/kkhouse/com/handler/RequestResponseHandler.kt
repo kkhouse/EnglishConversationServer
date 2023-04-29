@@ -6,7 +6,6 @@ import arrow.core.Either
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.*
 import com.aallam.openai.api.model.ModelId
-import com.google.cloud.speech.v1.RecognizeRequest
 import com.google.cloud.speech.v1.RecognizeResponse
 import kkhouse.com.exceptions.EmptyTextException
 import kkhouse.com.exceptions.MultiChunkException
@@ -15,7 +14,8 @@ import kkhouse.com.exceptions.UnexpectedCompletion
 import kkhouse.com.repository.TranscriptText
 import kkhouse.com.speech.Conversation
 import kkhouse.com.speech.Role
-import java.util.Properties
+import java.io.File
+import java.util.*
 
 interface RequestResponseHandler {
     fun handleSpeechToTextResponse(response: RecognizeResponse): Either<Exception, TranscriptText>
@@ -26,7 +26,6 @@ interface RequestResponseHandler {
 }
 
 class RequestResponseHandlerImpl(
-    private val promptProp: Properties,
 ): RequestResponseHandler {
 
     companion object {
@@ -85,7 +84,16 @@ class RequestResponseHandlerImpl(
 
     @OptIn(BetaOpenAI::class)
     private fun systemPrompt(): ChatMessage {
-        return ChatMessage(role = ChatRole.System, content = promptProp.getProperty(PROMPT_BEGINNER_KEY))
+        val filePath = this::class.java.classLoader.getResource("prompt.properties")?.path
+        val file = File(filePath)
+
+        if (file.exists() && !file.isDirectory) {
+            println("File exists!!")
+        } else {
+            println("File doesn't exist or program doesn't have access to it")
+        }
+        val properties = Properties().apply { file.inputStream().use(this::load) }
+        return ChatMessage(role = ChatRole.System, content = properties.getProperty(PROMPT_BEGINNER_KEY))
     }
 
     @OptIn(BetaOpenAI::class)
