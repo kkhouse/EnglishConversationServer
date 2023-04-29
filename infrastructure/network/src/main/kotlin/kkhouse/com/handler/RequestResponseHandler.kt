@@ -15,6 +15,7 @@ import kkhouse.com.exceptions.UnexpectedCompletion
 import kkhouse.com.repository.TranscriptText
 import kkhouse.com.speech.Conversation
 import kkhouse.com.speech.Role
+import java.util.Properties
 
 interface RequestResponseHandler {
     fun handleSpeechToTextResponse(response: RecognizeResponse): Either<Exception, TranscriptText>
@@ -24,17 +25,15 @@ interface RequestResponseHandler {
     fun handleChatResponse(chatCompletion: ChatCompletion): Either<Exception, Conversation>
 }
 
-class RequestResponseHandlerImpl: RequestResponseHandler {
+class RequestResponseHandlerImpl(
+    private val promptProp: Properties,
+): RequestResponseHandler {
 
     companion object {
         private const val MODEL_NAME = "gpt-3.5-turbo"
+        private const val PROMPT_BEGINNER_KEY = "Beginner"
+        private const val PROMPT_ADVANCED_KEY = "Advanced"
     }
-
-    @OptIn(BetaOpenAI::class)
-    private val systemRolePrompt = ChatMessage(
-        role = ChatRole.System,
-        content = ""
-    )
 
     override fun handleSpeechToTextResponse(response: RecognizeResponse): Either<Exception, TranscriptText> {
         /*
@@ -55,7 +54,7 @@ class RequestResponseHandlerImpl: RequestResponseHandler {
             messages = when(conversation) {
                 null -> getInitialPrompt()
                 // NOTE: トークン節約のため最後の6つの会話を送る
-                else -> listOf(systemRolePrompt) + conversation.takeLast(6).map(::toChatMessageRequest)
+                else -> listOf(systemPrompt()) + conversation.takeLast(6).map(::toChatMessageRequest)
             }
         }.build()
     }
@@ -76,15 +75,17 @@ class RequestResponseHandlerImpl: RequestResponseHandler {
         }
     }
 
-    /**
-     * TODO
-     */
     @OptIn(BetaOpenAI::class)
     private fun getInitialPrompt() : List<ChatMessage> {
         return listOf(
-            systemRolePrompt,
-            ChatMessage(role = ChatRole.User, content = ""),
+            systemPrompt(),
+            ChatMessage(role = ChatRole.User, content = "Please say \"Let's talk\" if you have understood the prompt."),
         )
+    }
+
+    @OptIn(BetaOpenAI::class)
+    private fun systemPrompt(): ChatMessage {
+        return ChatMessage(role = ChatRole.System, content = promptProp.getProperty(PROMPT_BEGINNER_KEY))
     }
 
     @OptIn(BetaOpenAI::class)

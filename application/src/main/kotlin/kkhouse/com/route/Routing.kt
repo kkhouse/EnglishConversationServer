@@ -15,6 +15,8 @@ import kkhouse.com.utils.TextToSpeechError
 import kkhouse.com.utils.forEachAsync
 import mu.KotlinLogging
 import org.koin.java.KoinJavaComponent
+import java.io.InputStream
+import java.util.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -27,7 +29,7 @@ fun Application.configureRouting() {
                     onSuccess = { call.respond(status = HttpStatusCode.OK, message = it) },
                     onFailure = {
                         call.respond(status = InternalServerError, message = ChatData(errorCode = 0))
-                        logger.error { "AppError : $it , If UnKnownError Message : ${(it as? AppError.UnKnownError)?.message } "}
+                        logger.error { "AppError : $it , If UnKnownError Message : ${(it as? AppError.UnKnownError)?.message} " }
                     }
                 )
         }
@@ -37,12 +39,20 @@ fun Application.configureRouting() {
                 .forEachAsync(
                     onSuccess = { call.respond(HttpStatusCode.OK, it) },
                     onFailure = {
-                        when(it) {
-                            is TextToSpeechError.InvalidChunk -> call.respond(status = InternalServerError, UploadResult(errorCode = it.code))
-                            is TextToSpeechError.InvalidResultText -> call.respond(status = InternalServerError, UploadResult(errorCode = it.code))
+                        when (it) {
+                            is TextToSpeechError.InvalidChunk -> call.respond(
+                                status = InternalServerError,
+                                UploadResult(errorCode = it.code)
+                            )
+
+                            is TextToSpeechError.InvalidResultText -> call.respond(
+                                status = InternalServerError,
+                                UploadResult(errorCode = it.code)
+                            )
+
                             else -> call.respond(status = InternalServerError, message = ChatData(errorCode = 0))
                         }
-                        logger.error { "AppError : $it , If UnKnownError Message : ${(it as? AppError.UnKnownError)?.message } "}
+                        logger.error { "AppError : $it , If UnKnownError Message : ${(it as? AppError.UnKnownError)?.message} " }
                     }
                 )
         }
@@ -52,11 +62,15 @@ fun Application.configureRouting() {
                 .forEachAsync(
                     onSuccess = { call.respond(HttpStatusCode.OK, it) },
                     onFailure = {
-                        when(it) {
-                            is AiSpeechError.UnexpectedResultData -> call.respond(status = InternalServerError, ChatData(errorCode = it.code))
+                        when (it) {
+                            is AiSpeechError.UnexpectedResultData -> call.respond(
+                                status = InternalServerError,
+                                ChatData(errorCode = it.code)
+                            )
+
                             else -> call.respond(status = InternalServerError, message = ChatData(errorCode = 0))
                         }
-                        logger.error { "AppError : $it , If UnKnownError Message : ${(it as? AppError.UnKnownError)?.message } "}
+                        logger.error { "AppError : $it , If UnKnownError Message : ${(it as? AppError.UnKnownError)?.message} " }
                     }
                 )
         }
