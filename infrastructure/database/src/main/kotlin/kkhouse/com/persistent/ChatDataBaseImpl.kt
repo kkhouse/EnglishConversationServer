@@ -4,12 +4,23 @@ import kkhouse.com.speech.ChatRoomId
 import kkhousecom.ChatLogShemeQueries
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import mu.KLogging
 
 class ChatDataBaseImpl(
     private val queries: ChatLogShemeQueries,
     private val dispatcher: CoroutineDispatcher
 ): ChatDataBase {
+
+    companion object : KLogging()
+
+    init { log() }
+
     override suspend fun queryChatRoomsForUser(userId: String): Result<List<ChatRoomId>> {
         return withContext(dispatcher) {
             runCatching {
@@ -67,6 +78,29 @@ class ChatDataBaseImpl(
         return withContext(dispatcher) {
             runCatching {
                 queries.deleteUserAndRelatedData(userId)
+            }
+        }
+    }
+
+    private fun log() {
+        GlobalScope.launch {
+            flow {
+                while (true) {
+                    kotlinx.coroutines.delay(10000)
+                    try {
+                        emit(queries.queryAllData().executeAsList())
+                    }catch (e: Exception) {
+                        logger.error { "allData is null ? : ${e.message}" }
+                    }
+                }
+            }.collect { list ->
+                list.forEachIndexed { index, queryAllData ->
+                    logger.info {
+                        "All database value \n" +
+                                "index : $index " +
+                                "queryAll : ${queryAllData.toString()}"
+                    }
+                }
             }
         }
     }

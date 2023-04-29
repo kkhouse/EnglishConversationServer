@@ -18,6 +18,12 @@ CREATE TABLE chat_log (
     FOREIGN KEY (chat_room_id) REFERENCES chat_room(id)
 );
 
+queryAllData:
+SELECT user.id AS user_id, user.user_id, chat_room.id AS chat_room_id, chat_log.id AS chat_log_id, chat_log.role, chat_log.message, chat_log.created_at
+FROM user
+JOIN chat_room ON user.id = chat_room.user_id
+JOIN chat_log ON chat_room.id = chat_log.chat_room_id;
+
 queryMessagesAndRolesForUserInChatRoom:
 SELECT message, role, chat_log.id
 FROM chat_log
