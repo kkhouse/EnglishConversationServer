@@ -21,7 +21,7 @@ interface SpeechToTextRepository {
      */
     suspend fun postConversation(conversation: List<Conversation>?): Resource<Conversation>
 
-    suspend fun createUserAndChatRoom(userId: String): Resource<ChatRoomId>
+    suspend fun createUserAndChatRoom(userId: String): Resource<List<ChatRoomId>>
 
     suspend fun createChatRoom(userId: String): Resource<Unit>
 

@@ -59,8 +59,8 @@ class SpeechToTextUseCaseImpl(
         var cashRoomId : ChatRoomId = 0
         val userID = UUID.randomUUID().toString()
         return speechToTextRepository.createUserAndChatRoom(userID)
-            .flatMapAsync { chatRoomId ->
-                cashRoomId = chatRoomId
+            .flatMapAsync { appRoomIds ->
+                cashRoomId = appRoomIds.last()
                 speechToTextRepository.postConversation(null)
             }
             .flatMapAsync { aiResponded ->

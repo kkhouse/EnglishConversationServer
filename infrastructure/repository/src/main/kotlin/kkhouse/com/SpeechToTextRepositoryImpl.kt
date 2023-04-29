@@ -9,6 +9,7 @@ import kkhouse.com.exceptions.UnexpectedCompletion
 import kkhouse.com.file.LocalFileManager
 import kkhouse.com.mapping.mapConversation
 import kkhouse.com.persistent.ChatDataBase
+
 import kkhouse.com.repository.SpeechToTextRepository
 import kkhouse.com.repository.TranscriptText
 import kkhouse.com.speech.*
@@ -71,13 +72,13 @@ class SpeechToTextRepositoryImpl(
             )
     }
 
-    override suspend fun createUserAndChatRoom(userId: String): Resource<ChatRoomId> {
+    override suspend fun createUserAndChatRoom(userId: String): Resource<List<ChatRoomId>> {
         return chatDatabase.createUser(userId)
             .zip3Result(
                 resultB = chatDatabase.createChatRoomForUser(userId),
                 resultC = chatDatabase.queryChatRoomsForUser(userId),
                 transformerWithAB = {_, _ -> },
-                transformerWithC = { _, roomIdList -> roomIdList.last() } // 作成したRoomIDを取得する
+                transformerWithC = { _, roomIdList -> roomIdList } // NOTE: 作成した最新のListのIndexがアプリのAppRoomChatの区分とひもづく
             ).toResource()
     }
 
