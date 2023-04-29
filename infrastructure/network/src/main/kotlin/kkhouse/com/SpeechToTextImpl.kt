@@ -2,8 +2,8 @@
 
 package kkhouse.com
 
+import arrow.core.Either
 import com.aallam.openai.api.BetaOpenAI
-import com.aallam.openai.api.chat.ChatCompletion
 import com.aallam.openai.client.OpenAI
 import com.google.cloud.speech.v1.RecognitionAudio
 import com.google.cloud.speech.v1.RecognitionConfig
@@ -11,15 +11,11 @@ import com.google.cloud.speech.v1.SpeechClient
 import com.google.cloud.storage.BlobId
 import com.google.cloud.storage.BlobInfo
 import com.google.cloud.storage.Storage
-import com.google.protobuf.ByteString
-import kkhouse.com.exceptions.EmptyTextException
-import kkhouse.com.exceptions.MultiChunkException
-import kkhouse.com.exceptions.MultiResultException
 import kkhouse.com.handler.RequestResponseHandler
 import kkhouse.com.repository.TranscriptText
-import kkhouse.com.speech.AiResponded
 import kkhouse.com.speech.Conversation
 import kkhouse.com.speech.FlacData
+import mu.KLogging
 import java.nio.file.Paths
 
 
@@ -30,7 +26,7 @@ class SpeechToTextImpl (
     private val handler: RequestResponseHandler
 ): SpeechToText {
 
-    companion object {
+    companion object : KLogging() {
         // The ID of your GCS bucket
         const val bucketName = "english-conversation-backet"
 
@@ -50,7 +46,9 @@ class SpeechToTextImpl (
             }
             storage.createFrom(blobInfo, Paths.get(flacData.localFilePath), precondition)
 
-            println("DEBUG: File $flacData.localFilePath uploaded to bucket $bucketName as ${flacData.fileName}")
+            logger.debug {
+                "UploadFlacFile: ${flacData.localFilePath} uploaded to bucket $bucketName as ${flacData.fileName}"
+            }
 
             flacData
         }
@@ -60,7 +58,9 @@ class SpeechToTextImpl (
         return runCatching {
             val blobId = BlobId.of(bucketName, flacData.fileName)
             storage.delete(blobId)
-            println("DEBUG: File $flacData.localFilePath deleted to bucket $bucketName as ${flacData.fileName}")
+            logger.debug {
+                "DeleteFlacFile:File $flacData.localFilePath deleted to bucket $bucketName as ${flacData.fileName}"
+            }
         }
     }
 
@@ -72,28 +72,29 @@ class SpeechToTextImpl (
         val config = RecognitionConfig.newBuilder()
             .setEncoding(RecognitionConfig.AudioEncoding.FLAC)
             .setSampleRateHertz(flacData.sampleRate)
-            .setLanguageCode("en-US")
+            .setLanguageCode(flacData.language)
             .setAudioChannelCount(flacData.chanelCount)
             .build()
         return runCatching {
-            val results = client.recognize(config, audio)
-            when {
-                results.resultsList.lastIndex != 0 -> throw MultiResultException(results.toString()) // TODO 2つ以上になるケースがドキュメントから追えてない
-                results.resultsList[0].alternativesCount != 1 -> throw MultiChunkException(results.toString())
-                results.resultsList[0].alternativesList[0].transcript.isEmpty() -> throw EmptyTextException(results.toString())
-                else -> results.resultsList[0].alternativesList[0].transcript
-            }
+            handler.handleSpeechToTextResponse(
+                response = client.recognize(config, audio)
+            ).toResultValue()
         }
     }
 
-    override suspend fun postCompletion(conversation: List<Conversation>?): Result<AiResponded> {
+    @OptIn(BetaOpenAI::class)
+    override suspend fun postCompletion(conversation: List<Conversation>?): Result<Conversation> {
         return runCatching {
             handler.handleChatResponse(
                 chatCompletion = openAi.chatCompletion(handler.createChatRequest(conversation))
-            ).fold(
-                ifLeft = { exception -> throw exception },
-                ifRight = { aiResponded -> aiResponded }
-            )
+            ).toResultValue()
         }
+    }
+
+    private fun <A: Throwable, B> Either<A,B>.toResultValue(): B {
+        return this.fold(
+            ifRight = { it },
+            ifLeft =  { throw it }
+        )
     }
 }

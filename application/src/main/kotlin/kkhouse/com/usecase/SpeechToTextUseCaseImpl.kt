@@ -4,12 +4,18 @@ import kkhouse.com.repository.SpeechToTextRepository
 import kkhouse.com.speech.*
 import kkhouse.com.utils.AppError
 import kkhouse.com.utils.Resource
+import mu.KLoggable
+import mu.KLogger
+import mu.KLogging
 import java.security.InvalidParameterException
 import java.util.*
+import kotlin.math.log
 
 class SpeechToTextUseCaseImpl(
     private val speechToTextRepository: SpeechToTextRepository,
 ) : SpeechToTextUseCase {
+
+    companion object: KLogging()
 
     override suspend fun handleInitialize(initData: InitializedConversation): Resource<ChatData> {
         val userId = initData.userId

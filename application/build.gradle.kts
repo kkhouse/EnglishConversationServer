@@ -28,4 +28,6 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     implementation("io.insert-koin:koin-core:$koin_version")
 
+    implementation("io.github.microutils:kotlin-logging:1.7.4")
+    implementation("org.slf4j:slf4j-simple:1.7.26")
 }

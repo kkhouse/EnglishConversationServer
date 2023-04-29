@@ -24,6 +24,9 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.8.2")
     testImplementation("org.mockito.kotlin:mockito-kotlin:3.2.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4")
+
+    implementation("io.github.microutils:kotlin-logging:1.7.4")
+    implementation("org.slf4j:slf4j-simple:1.7.26")
 }
 
 sqldelight {

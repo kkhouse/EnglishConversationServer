@@ -30,9 +30,6 @@ class LocalFileManagerImpl (
         }
     }
 
-    /*
-    TODO 抽象的にかけないか？
-     */
     override fun analyzeFileData(filename: String): Result<FlacData> {
         val filePath = Path("").absolutePathString() + SAVE_LOCATION + filename
         return runCatching {

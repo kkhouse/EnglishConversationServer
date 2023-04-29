@@ -9,7 +9,6 @@ data class EmptyTextException(val unexpectedDataLog: String): Exception()
 
 /**
  * ChatCompletion
- *
  */
 data class UnexpectedCompletion(
     val unexpectedDataLog: String = "too much ChatChoice or empty message"

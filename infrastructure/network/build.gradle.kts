@@ -28,4 +28,7 @@ dependencies {
     implementation(platform("com.google.cloud:libraries-bom:26.13.0"))
     implementation("com.google.cloud:google-cloud-storage")
     implementation("com.aallam.openai:openai-client:$openai")
+
+    implementation("io.github.microutils:kotlin-logging:1.7.4")
+    implementation("org.slf4j:slf4j-simple:1.7.26")
 }

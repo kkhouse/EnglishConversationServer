@@ -75,8 +75,8 @@ data class UploadData(
 // レスポンス
 @Serializable
 data class UploadResult(
-    val userId: String,
-    val appChatRoom: Int,
+    val userId: String? = null,
+    val appChatRoom: Int? = null,
     val speech: String? = null,
     val errorCode: Int? = null
 )
@@ -97,12 +97,8 @@ data class AiChatInquired(
         } ?: throw IllegalStateException("Unexpected appChatRoom value")
     }
 }
-// クレイアントへ ChatDataと同様
-
-data class AiResponded(
-    val role: Role,
-    val message: String
-)
+// クライアントへ
+// ChatDataと同様。
 
 enum class ClientChatRoomId(val value: Int) {
     EnglishConversation(0), SearchExpression(1), Unknown(100)

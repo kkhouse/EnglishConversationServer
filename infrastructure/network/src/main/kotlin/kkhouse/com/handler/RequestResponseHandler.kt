@@ -6,21 +6,27 @@ import arrow.core.Either
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.*
 import com.aallam.openai.api.model.ModelId
+import com.google.cloud.speech.v1.RecognizeRequest
+import com.google.cloud.speech.v1.RecognizeResponse
+import kkhouse.com.exceptions.EmptyTextException
+import kkhouse.com.exceptions.MultiChunkException
+import kkhouse.com.exceptions.MultiResultException
 import kkhouse.com.exceptions.UnexpectedCompletion
-import kkhouse.com.speech.AiResponded
+import kkhouse.com.repository.TranscriptText
 import kkhouse.com.speech.Conversation
 import kkhouse.com.speech.Role
 
 interface RequestResponseHandler {
+    fun handleSpeechToTextResponse(response: RecognizeResponse): Either<Exception, TranscriptText>
+
     fun createChatRequest(conversation: List<Conversation>?): ChatCompletionRequest
 
-    fun handleChatResponse(chatCompletion: ChatCompletion): Either<Exception,AiResponded>
+    fun handleChatResponse(chatCompletion: ChatCompletion): Either<Exception, Conversation>
 }
 
 class RequestResponseHandlerImpl: RequestResponseHandler {
 
     companion object {
-        private const val TAG = "ChatCompletionHandlerImpl"
         private const val MODEL_NAME = "gpt-3.5-turbo"
     }
 
@@ -29,6 +35,18 @@ class RequestResponseHandlerImpl: RequestResponseHandler {
         role = ChatRole.System,
         content = ""
     )
+
+    override fun handleSpeechToTextResponse(response: RecognizeResponse): Either<Exception, TranscriptText> {
+        /*
+        例外としているケースは発生しない様子のため、エラーにする
+         */
+        return when {
+            response.resultsList.size != 1 -> Either.Left(MultiResultException(response.toString()))
+            response.resultsList[0].alternativesCount != 1 -> Either.Left(MultiChunkException(response.toString()))
+            response.resultsList[0].alternativesList[0].transcript.isEmpty() -> Either.Left(EmptyTextException(response.toString()))
+            else -> Either.Right(response.resultsList[0].alternativesList[0].transcript)
+        }
+    }
 
     @OptIn(BetaOpenAI::class)
     override fun createChatRequest(conversation: List<Conversation>?): ChatCompletionRequest {
@@ -43,14 +61,14 @@ class RequestResponseHandlerImpl: RequestResponseHandler {
     }
 
     @OptIn(BetaOpenAI::class)
-    override fun handleChatResponse(chatCompletion: ChatCompletion): Either<Exception,AiResponded> {
+    override fun handleChatResponse(chatCompletion: ChatCompletion): Either<Exception,Conversation> {
         // NOTE: どこにも記載がないが、複数くることがなさそうなのでサイズ1 を前提とする
         return chatCompletion.choices.let { chatList ->
             when(chatList.size == 1 && chatList[0].message == null) {
                 true -> Either.Left(UnexpectedCompletion())
                 else -> Either.Right(
-                    AiResponded(
-                        role = Role.Assistant,
+                    Conversation(
+                        role = Role.Assistant.value,
                         message = chatList[0].message!!.content
                     )
                 )
@@ -69,9 +87,10 @@ class RequestResponseHandlerImpl: RequestResponseHandler {
         )
     }
 
+    @OptIn(BetaOpenAI::class)
     private fun toChatMessageRequest(conversation: Conversation): ChatMessage {
         return ChatMessage(
-            role = when(conversation.role) {
+            role = when(conversation.getRole()) {
                 Role.Assistant -> ChatRole.Assistant
                 Role.User -> ChatRole.User
             },

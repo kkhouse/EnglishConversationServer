@@ -13,4 +13,5 @@ repositories {
 
 dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
+
 }

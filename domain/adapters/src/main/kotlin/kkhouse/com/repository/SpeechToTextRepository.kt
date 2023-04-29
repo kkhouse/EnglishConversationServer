@@ -19,7 +19,7 @@ interface SpeechToTextRepository {
     /**
      * 応答を1件
      */
-    suspend fun postConversation(conversation: List<Conversation>?): Resource<AiResponded>
+    suspend fun postConversation(conversation: List<Conversation>?): Resource<Conversation>
 
     suspend fun createUserAndChatRoom(userId: String): Resource<ChatRoomId>
 
@@ -28,7 +28,7 @@ interface SpeechToTextRepository {
     suspend fun writeConversation(
         userId: String,
         chatRoomId: Int,
-        conversation: AiResponded
+        conversation: Conversation
     ): Resource<ChatData>
 
     suspend fun findChatRoomsForUser(userId: String): Resource<List<ChatRoomId>>

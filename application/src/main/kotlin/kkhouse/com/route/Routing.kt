@@ -1,62 +1,62 @@
 package kkhouse.com.route
 
-import kkhouse.com.speech.Audio
-import kkhouse.com.speech.ByteFlacData
-import kkhouse.com.utils.Resource
-import kkhouse.com.speech.SpeechToTextResult
-import kkhouse.com.utils.forEachAsync
 import io.ktor.http.*
+import io.ktor.http.HttpStatusCode.Companion.InternalServerError
 import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kkhouse.com.speech.ChatData
+import kkhouse.com.speech.UploadResult
+import kkhouse.com.usecase.SpeechToTextUseCase
+import kkhouse.com.utils.AiSpeechError
 import kkhouse.com.utils.AppError
 import kkhouse.com.utils.TextToSpeechError
+import kkhouse.com.utils.forEachAsync
+import mu.KotlinLogging
 import org.koin.java.KoinJavaComponent
-import kkhouse.com.usecase.SpeechToTextUseCase
+
+private val logger = KotlinLogging.logger {}
 
 fun Application.configureRouting() {
     val useCase: SpeechToTextUseCase by KoinJavaComponent.inject(SpeechToTextUseCase::class.java)
     routing {
-        post("/speechtotext") { // TODO 削除
-            useCase.handleSpeechToTextClientRequest(
-                Resource.ofAsync { call.receive<ByteFlacData>() }
-            ).forEachAsync(
-                onSuccess = { call.respond(status = HttpStatusCode.OK, message = it) },
-                onFailure = { call.respond(status = HttpStatusCode.NotFound, message = SpeechToTextResult.createErrorCodeResult(it)) }
-            )
+        post("/initilize") {
+            useCase.handleInitialize(initData = call.receive())
+                .forEachAsync(
+                    onSuccess = { call.respond(status = HttpStatusCode.OK, message = it) },
+                    onFailure = {
+                        call.respond(status = InternalServerError, message = ChatData(errorCode = 0))
+                        logger.error { "AppError : $it , If UnKnownError Message : ${(it as? AppError.UnKnownError)?.message } "}
+                    }
+                )
         }
 
         post("/upload") {
-//            when(ContentType.Audio.Any.contentType == call.request.contentType().contentType) {
-//                true -> useCase.handleFileUploaded(flacByteArray = call.receive<ByteArray>())
-//                    .forEachAsync(
-//                        onSuccess = { resp -> call.respond(HttpStatusCode.OK, resp) },
-//                        onFailure = { error ->
-//                            when(error) { // TODO
-//                                is TextToSpeechError.InvalidChunk -> call.respond(HttpStatusCode.NotFound, "multiple chunk")
-//                                is TextToSpeechError.InvalidResultText -> call.respond(HttpStatusCode.NotFound, "text empty")
-//                                is AppError.UnKnownError -> call.respond(HttpStatusCode.NotFound, "unknownError")
-//                            }
-//
-//                        }
-//                    )
-//                else -> call.respond(HttpStatusCode.UnsupportedMediaType, "UnSupportedMediaType")
-//            }
-
-            // TODO
-            val audio = call.receive<Audio>()
-
-            useCase.handleFileUploaded(flacByteArray = audio.data)
+            useCase.handleFileUploaded(uploadData = call.receive())
                 .forEachAsync(
-                    onSuccess = { resp -> call.respond(HttpStatusCode.OK, resp) },
-                    onFailure = { error ->
-                        when(error) {
-                            is TextToSpeechError.InvalidChunk -> call.respond(HttpStatusCode.NotFound, "multiple chunk")
-                            is TextToSpeechError.InvalidResultText -> call.respond(HttpStatusCode.NotFound, "text empty")
-                            is AppError.UnKnownError -> call.respond(HttpStatusCode.NotFound, "unknownError")
+                    onSuccess = { call.respond(HttpStatusCode.OK, it) },
+                    onFailure = {
+                        when(it) {
+                            is TextToSpeechError.InvalidChunk -> call.respond(status = InternalServerError, UploadResult(errorCode = it.code))
+                            is TextToSpeechError.InvalidResultText -> call.respond(status = InternalServerError, UploadResult(errorCode = it.code))
+                            else -> call.respond(status = InternalServerError, message = ChatData(errorCode = 0))
                         }
+                        logger.error { "AppError : $it , If UnKnownError Message : ${(it as? AppError.UnKnownError)?.message } "}
+                    }
+                )
+        }
 
+        post("/aiSpeech") {
+            useCase.handlePostAiSpeech(aiChatInquired = call.receive())
+                .forEachAsync(
+                    onSuccess = { call.respond(HttpStatusCode.OK, it) },
+                    onFailure = {
+                        when(it) {
+                            is AiSpeechError.UnexpectedResultData -> call.respond(status = InternalServerError, ChatData(errorCode = it.code))
+                            else -> call.respond(status = InternalServerError, message = ChatData(errorCode = 0))
+                        }
+                        logger.error { "AppError : $it , If UnKnownError Message : ${(it as? AppError.UnKnownError)?.message } "}
                     }
                 )
         }

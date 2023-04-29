@@ -1,14 +1,21 @@
 package kkhouse.com
+
 import zip3Result
 import combineResult
-import kkhouse.com.speech.Role.Companion.getRowValue
+import kkhouse.com.exceptions.EmptyTextException
+import kkhouse.com.exceptions.MultiChunkException
+import kkhouse.com.exceptions.MultiResultException
+import kkhouse.com.exceptions.UnexpectedCompletion
 import kkhouse.com.file.LocalFileManager
 import kkhouse.com.mapping.mapConversation
 import kkhouse.com.persistent.ChatDataBase
 import kkhouse.com.repository.SpeechToTextRepository
 import kkhouse.com.repository.TranscriptText
 import kkhouse.com.speech.*
+import kkhouse.com.utils.AiSpeechError
+import kkhouse.com.utils.AppError
 import kkhouse.com.utils.Resource
+import kkhouse.com.utils.TextToSpeechError
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 import toResource
 
@@ -21,8 +28,9 @@ class SpeechToTextRepositoryImpl(
     override fun writeFlacFile(byteArray: ByteArray, fileName: FlacData): Resource<FlacData> {
         return localFileManager.saveFile(byteArray, fileName.fileName)
             .combineResult(
-                resultB = localFileManager.analyzeFileData(fileName.fileName)
-            ) { _, analyzedFlacData -> analyzedFlacData }.toResource()
+                resultB = localFileManager.analyzeFileData(fileName.fileName),
+                transformer = { _, analyzedFlacData -> analyzedFlacData }
+            ).toResource()
     }
 
     override fun deleteFlacFile(flacData: FlacData): Resource<Unit> {
@@ -38,11 +46,29 @@ class SpeechToTextRepositoryImpl(
     }
 
     override fun recognizeSpeech(flacData: FlacData): Resource<TranscriptText> {
-        return speechToText.postSpeechToText(flacData).toResource()
+        return speechToText.postSpeechToText(flacData)
+            .toResource(
+                mapAppError = { throwable ->
+                    when(throwable) {
+                        is MultiChunkException -> TextToSpeechError.InvalidChunk
+                        is MultiResultException,
+                        is EmptyTextException -> TextToSpeechError.InvalidResultText
+                        else -> AppError.UnKnownError(throwable.message)
+                    }
+                }
+            )
     }
 
-    override suspend fun postConversation(conversation: List<Conversation>?): Resource<AiResponded> {
-        return speechToText.postCompletion(conversation).toResource()
+    override suspend fun postConversation(conversation: List<Conversation>?): Resource<Conversation> {
+        return speechToText.postCompletion(conversation)
+            .toResource(
+                mapAppError = { throwable ->
+                    when(throwable) {
+                        is UnexpectedCompletion -> AiSpeechError.UnexpectedResultData
+                        else -> AppError.UnKnownError(throwable.message)
+                    }
+                }
+            )
     }
 
     override suspend fun createUserAndChatRoom(userId: String): Resource<ChatRoomId> {
@@ -62,22 +88,23 @@ class SpeechToTextRepositoryImpl(
     override suspend fun writeConversation(
         userId: String,
         chatRoomId: Int,
-        conversation: AiResponded,
+        conversation: Conversation,
     ): Resource<ChatData> {
         return chatDatabase.insertChatLogForUserInChatRoom(
             chatRoomId = chatRoomId,
-            role = conversation.role.value,
+            role = conversation.role,
             message = conversation.message,
-            createdAt = 0 // TODO
+            createdAt = System.currentTimeMillis()
         ).combineResult(
-            resultB = chatDatabase.queryMessagesAndRolesForUserInChatRoom(userId, chatRoomId)
-        ) { _ , conversationData ->
-            ChatData(
-                userId = userId,
-                appChatRoom = chatRoomId,
-                conversation = conversationData.map(QueryMessagesAndRolesForUserInChatRoom::mapConversation),
-            )
-        }.toResource()
+            resultB = chatDatabase.queryMessagesAndRolesForUserInChatRoom(userId, chatRoomId),
+            transformer = { _ , conversationData ->
+                ChatData(
+                    userId = userId,
+                    appChatRoom = chatRoomId,
+                    conversation = conversationData.map(QueryMessagesAndRolesForUserInChatRoom::mapConversation),
+                )
+            }
+        ).toResource()
     }
 
     override suspend fun findChatRoomsForUser(userId: String): Resource<List<ChatRoomId>> {
