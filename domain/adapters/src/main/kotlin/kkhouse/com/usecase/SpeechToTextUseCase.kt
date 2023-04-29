@@ -1,15 +1,13 @@
 package kkhouse.com.usecase
 
-import kkhouse.com.speech.ByteFlacData
-import kkhouse.com.speech.ChatData
+import kkhouse.com.speech.*
 import kkhouse.com.utils.Resource
-import kkhouse.com.speech.SpeechToTextResult
 
 
 interface SpeechToTextUseCase {
-    suspend fun handleSpeechToTextClientRequest(flacData: Resource<ByteFlacData>): Resource<SpeechToTextResult>
+    suspend fun handleInitialize(initData: InitializedConversation): Resource<ChatData>
 
-    suspend fun handleFileUploaded(flacByteArray: ByteArray): Resource<SpeechToTextResult>
+    suspend fun handleFileUploaded(uploadData: UploadData): Resource<UploadResult>
 
-    suspend fun handleInitialize(userId: String?): Resource<ChatData>
+    suspend fun handlePostAiSpeech(aiChatInquired:AiChatInquired): Resource<ChatData>
 }

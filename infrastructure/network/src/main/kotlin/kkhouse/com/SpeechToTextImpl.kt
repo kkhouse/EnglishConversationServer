@@ -17,6 +17,7 @@ import kkhouse.com.exceptions.MultiChunkException
 import kkhouse.com.exceptions.MultiResultException
 import kkhouse.com.handler.RequestResponseHandler
 import kkhouse.com.repository.TranscriptText
+import kkhouse.com.speech.AiResponded
 import kkhouse.com.speech.Conversation
 import kkhouse.com.speech.FlacData
 import java.nio.file.Paths
@@ -34,28 +35,6 @@ class SpeechToTextImpl (
         const val bucketName = "english-conversation-backet"
 
         const val projectId = "english-conversation-app"
-    }
-    override fun oldPostSpeechToText(content: String): Result<TranscriptText> {
-        val byte = ByteString.copyFromUtf8(content)
-        val audio = RecognitionAudio.newBuilder()
-            .setContent(byte)
-//            .setUri("gs://cloud-samples-tests/speech/brooklyn.flac")
-            .build()
-        val config = RecognitionConfig.newBuilder()
-            .setEncoding(RecognitionConfig.AudioEncoding.FLAC)
-            .setSampleRateHertz(24000)
-            .setLanguageCode("en-US")
-            .setAudioChannelCount(1)
-            .build()
-        return runCatching {
-            val results = client.recognize(config, audio)
-            when {
-                results.resultsList.lastIndex != 0 -> throw MultiResultException(results.toString()) // TODO 2つ以上になるケースがドキュメントから追えてない
-                results.resultsList[0].alternativesCount != 1 -> throw MultiChunkException(results.toString())
-                results.resultsList[0].alternativesList[0].transcript.isEmpty() -> throw EmptyTextException(results.toString())
-                else -> results.resultsList[0].alternativesList[0].transcript
-            }
-        }
     }
 
     override fun uploadFlacFileOnGCP(flacData: FlacData): Result<FlacData> {
@@ -107,9 +86,14 @@ class SpeechToTextImpl (
         }
     }
 
-    override suspend fun postCompletion(newMessage: String, conversation: List<Conversation>?): Result<ChatCompletion> {
+    override suspend fun postCompletion(conversation: List<Conversation>?): Result<AiResponded> {
         return runCatching {
-            openAi.chatCompletion(handler.createChatRequest(newMessage, conversation))
+            handler.handleChatResponse(
+                chatCompletion = openAi.chatCompletion(handler.createChatRequest(conversation))
+            ).fold(
+                ifLeft = { exception -> throw exception },
+                ifRight = { aiResponded -> aiResponded }
+            )
         }
     }
 }

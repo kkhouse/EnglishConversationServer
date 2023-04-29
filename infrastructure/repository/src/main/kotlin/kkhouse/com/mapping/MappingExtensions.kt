@@ -6,8 +6,7 @@ import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 
 fun QueryMessagesAndRolesForUserInChatRoom.mapConversation(): Conversation {
     return Conversation(
-        chatID = this.id.toInt(),
-        role = this.role.toInt().createRole(),
+        role = this.role.toInt(),
         message = this.message
     )
 }

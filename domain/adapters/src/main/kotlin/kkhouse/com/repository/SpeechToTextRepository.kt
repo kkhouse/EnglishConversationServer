@@ -1,16 +1,11 @@
 package kkhouse.com.repository
 
-import kkhouse.com.speech.ChatData
-import kkhouse.com.speech.ChatRoomId
-import kkhouse.com.speech.Conversation
-import kkhouse.com.speech.FlacData
+import kkhouse.com.speech.*
 import kkhouse.com.utils.Resource
 
 typealias TranscriptText = String
 
 interface SpeechToTextRepository {
-    fun oldRecognizeSpeech(flacBase64: String): Result<TranscriptText> // TODO 削除
-
     fun writeFlacFile(byteArray: ByteArray, fileName: FlacData): Resource<FlacData>
 
     fun deleteFlacFile(flacData: FlacData): Resource<Unit>
@@ -21,19 +16,23 @@ interface SpeechToTextRepository {
 
     fun recognizeSpeech(flacData: FlacData): Resource<TranscriptText>
 
-    suspend fun createUserAndChatRoom(userId: String): Resource<Unit>
+    /**
+     * 応答を1件
+     */
+    suspend fun postConversation(conversation: List<Conversation>?): Resource<AiResponded>
+
+    suspend fun createUserAndChatRoom(userId: String): Resource<ChatRoomId>
 
     suspend fun createChatRoom(userId: String): Resource<Unit>
 
     suspend fun writeConversation(
         userId: String,
         chatRoomId: Int,
-        conversation: Conversation
+        conversation: AiResponded
     ): Resource<ChatData>
 
     suspend fun findChatRoomsForUser(userId: String): Resource<List<ChatRoomId>>
 
     suspend fun findChatHistory(userId: String, chatRoomId: Int): Resource<ChatData>
 
-    fun postConversation(newContent: Conversation): Resource<Conversation>
 }

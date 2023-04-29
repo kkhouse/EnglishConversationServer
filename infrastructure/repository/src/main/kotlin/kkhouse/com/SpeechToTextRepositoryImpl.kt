@@ -1,4 +1,5 @@
 package kkhouse.com
+import zip3Result
 import combineResult
 import kkhouse.com.speech.Role.Companion.getRowValue
 import kkhouse.com.file.LocalFileManager
@@ -6,10 +7,7 @@ import kkhouse.com.mapping.mapConversation
 import kkhouse.com.persistent.ChatDataBase
 import kkhouse.com.repository.SpeechToTextRepository
 import kkhouse.com.repository.TranscriptText
-import kkhouse.com.speech.ChatData
-import kkhouse.com.speech.ChatRoomId
-import kkhouse.com.speech.Conversation
-import kkhouse.com.speech.FlacData
+import kkhouse.com.speech.*
 import kkhouse.com.utils.Resource
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 import toResource
@@ -19,22 +17,12 @@ class SpeechToTextRepositoryImpl(
     private val localFileManager: LocalFileManager,
     private val chatDatabase: ChatDataBase
 ): SpeechToTextRepository {
-    override fun oldRecognizeSpeech(flacBase64: String): Result<TranscriptText> {
-        return speechToText.oldPostSpeechToText(content = flacBase64)
-    }
 
     override fun writeFlacFile(byteArray: ByteArray, fileName: FlacData): Resource<FlacData> {
         return localFileManager.saveFile(byteArray, fileName.fileName)
             .combineResult(
                 resultB = localFileManager.analyzeFileData(fileName.fileName)
             ) { _, analyzedFlacData -> analyzedFlacData }.toResource()
-
-//        return localFileManager.saveFile(byteArray, fileName.fileName)
-//            .map { localFileManager.analyzeFileData(fileName.fileName) }
-//            .fold(
-//                onSuccess = { it.toResource() },
-//                onFailure = { Resource.Failure(AppError.UnKnownError(it.message ?: "failed writing file")) }
-//            )
     }
 
     override fun deleteFlacFile(flacData: FlacData): Resource<Unit> {
@@ -53,10 +41,18 @@ class SpeechToTextRepositoryImpl(
         return speechToText.postSpeechToText(flacData).toResource()
     }
 
-    override suspend fun createUserAndChatRoom(userId: String): Resource<Unit> {
-        return chatDatabase.createUser(userId).combineResult(
-            resultB = chatDatabase.createChatRoomForUser(userId)
-        ) {_, _ -> }.toResource()
+    override suspend fun postConversation(conversation: List<Conversation>?): Resource<AiResponded> {
+        return speechToText.postCompletion(conversation).toResource()
+    }
+
+    override suspend fun createUserAndChatRoom(userId: String): Resource<ChatRoomId> {
+        return chatDatabase.createUser(userId)
+            .zip3Result(
+                resultB = chatDatabase.createChatRoomForUser(userId),
+                resultC = chatDatabase.queryChatRoomsForUser(userId),
+                transformerWithAB = {_, _ -> },
+                transformerWithC = { _, roomIdList -> roomIdList.last() } // 作成したRoomIDを取得する
+            ).toResource()
     }
 
     override suspend fun createChatRoom(userId: String): Resource<Unit> {
@@ -66,11 +62,11 @@ class SpeechToTextRepositoryImpl(
     override suspend fun writeConversation(
         userId: String,
         chatRoomId: Int,
-        conversation: Conversation,
+        conversation: AiResponded,
     ): Resource<ChatData> {
         return chatDatabase.insertChatLogForUserInChatRoom(
             chatRoomId = chatRoomId,
-            role = conversation.role.getRowValue(),
+            role = conversation.role.value,
             message = conversation.message,
             createdAt = 0 // TODO
         ).combineResult(
@@ -78,7 +74,7 @@ class SpeechToTextRepositoryImpl(
         ) { _ , conversationData ->
             ChatData(
                 userId = userId,
-                chatRoomId = chatRoomId,
+                appChatRoom = chatRoomId,
                 conversation = conversationData.map(QueryMessagesAndRolesForUserInChatRoom::mapConversation),
             )
         }.toResource()
@@ -93,7 +89,7 @@ class SpeechToTextRepositoryImpl(
             .map { list ->
                 ChatData(
                     userId = userId,
-                    chatRoomId = chatRoomId,
+                    appChatRoom = chatRoomId,
                     conversation = list.map(QueryMessagesAndRolesForUserInChatRoom::mapConversation)
                 )
             }.toResource()

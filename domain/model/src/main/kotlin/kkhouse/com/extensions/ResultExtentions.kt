@@ -19,7 +19,8 @@ fun <T> Result<T>.toResource(
 
 /**
  * Result<A>とResult<B>を合成する
- * いずれかFailureの場合はthrowable.message以外の情報は握り潰してしまうので注意
+ * いずれかFailureの場合はthrowable.messageをとりだして組み合わせたログを作成して返す
+ *  message以外の情報は捨ててしまうので注意　
  */
 fun <A, B, R> Result<A>.combineResult(
     resultB: Result<B>,
@@ -49,3 +50,13 @@ fun <A, B, R> Result<A>.combineResult(
         }
     }
 }
+
+/**
+ * Result<A> Result<B> Result<C> をzipする
+ */
+fun <A,B,C,R,R2> Result<A>.zip3Result(
+    resultB: Result<B>,
+    resultC: Result<C>,
+    transformerWithAB: (A, B) -> R,
+    transformerWithC: (R, C) -> R2
+): Result<R2> = this.combineResult(resultB, transformerWithAB).combineResult(resultC, transformerWithC)

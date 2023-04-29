@@ -3,18 +3,16 @@ package kkhouse.com
 import com.aallam.openai.api.BetaOpenAI
 import com.aallam.openai.api.chat.ChatCompletion
 import kkhouse.com.repository.TranscriptText
+import kkhouse.com.speech.AiResponded
 import kkhouse.com.speech.Conversation
 import kkhouse.com.speech.FlacData
 
 interface SpeechToText {
-    fun oldPostSpeechToText(content: String): Result<TranscriptText> // TODO 削除
-
     fun uploadFlacFileOnGCP(flacData: FlacData): Result<FlacData>
 
     fun deleteFlacFileOnGCP(flacData: FlacData): Result<Unit>
 
     fun postSpeechToText(flacData: FlacData): Result<TranscriptText>
 
-    @OptIn(BetaOpenAI::class)
-    suspend fun postCompletion(newMessage: String, conversation: List<Conversation>?): Result<ChatCompletion>
+    suspend fun postCompletion(conversation: List<Conversation>?): Result<AiResponded>
 }

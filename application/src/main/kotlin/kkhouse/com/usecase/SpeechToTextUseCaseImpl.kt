@@ -1,80 +1,85 @@
 package kkhouse.com.usecase
 
-import kkhouse.com.exceptions.EmptyTextException
-import kkhouse.com.exceptions.MultiChunkException
-import kkhouse.com.exceptions.MultiResultException
 import kkhouse.com.repository.SpeechToTextRepository
-import kkhouse.com.speech.ByteFlacData
-import kkhouse.com.speech.ChatData
-import kkhouse.com.speech.FlacData
-import kkhouse.com.speech.SpeechToTextResult
+import kkhouse.com.speech.*
 import kkhouse.com.utils.AppError
 import kkhouse.com.utils.Resource
-import kkhouse.com.utils.TextToSpeechError
+import java.security.InvalidParameterException
 import java.util.*
 
 class SpeechToTextUseCaseImpl(
     private val speechToTextRepository: SpeechToTextRepository,
 ) : SpeechToTextUseCase {
-    //TODO 消す
-    override suspend fun handleSpeechToTextClientRequest(flacData: Resource<ByteFlacData>): Resource<SpeechToTextResult> {
-        return flacData.flatMap { data ->
-            speechToTextRepository.oldRecognizeSpeech(data.data).fold(
-                onSuccess = { resultText ->
-                    when(resultText.isNotEmpty()) {
-                        true -> Resource.Success(SpeechToTextResult(text = resultText))
-                        else -> Resource.Failure(TextToSpeechError.InvalidResultText)
-                    }
-                },
-                onFailure = { throwable ->
-                    Resource.Failure(
-                        when(throwable) {
-                            is MultiResultException ->  {
-                                println("MultiResultException: ${throwable.unexpectedDataLog}")
-                                TextToSpeechError.InvalidResultText
-                            }
-                            is MultiChunkException ->  {
-                                println("MultiChunkException: ${throwable.unexpectedDataLog}")
-                                TextToSpeechError.InvalidChunk
-                            }
-                            is EmptyTextException -> {
-                                println("EmptyTextException: ${throwable.unexpectedDataLog}")
-                                TextToSpeechError.InvalidResultText
-                            }
-                            else -> {
-                                println("Other Exception: ${throwable.message}")
-                                AppError.UnKnownError(throwable.message ?: "unknown error")
-                            }
-                        }
-                    )
-                }
-            )
+
+    override suspend fun handleInitialize(initData: InitializedConversation): Resource<ChatData> {
+        val userId = initData.userId
+        return when(userId.isNullOrEmpty()) {
+            true -> getFirstUserChatData()
+            else -> getCurrentChatData(userId, initData.getRoomId())
         }
     }
 
-    override suspend fun handleFileUploaded(flacByteArray: ByteArray): Resource<SpeechToTextResult> {
-        val fileName = UUID.randomUUID().toString() + ".flac" // NOTE : File名はUUID
-        val flacData = FlacData(fileName = fileName)
-        return speechToTextRepository.writeFlacFile(byteArray = flacByteArray, fileName = flacData)
+    override suspend fun handleFileUploaded(uploadData: UploadData): Resource<UploadResult> {
+        // NOTE : fileNameは一意であればなんでもいい
+        val flacData = FlacData(fileName = UUID.randomUUID().toString() + ".flac" )
+        return speechToTextRepository.writeFlacFile(byteArray = uploadData.userFlacData, fileName = flacData)
             .flatMap(speechToTextRepository::uploadFlacFileToGCP)
             .flatMap(speechToTextRepository::recognizeSpeech)
-            .flatMap { resultText ->
-                when(resultText.isNotEmpty()) {
-                    true -> Resource.Success(SpeechToTextResult(text = resultText))
-                    else -> Resource.Failure(TextToSpeechError.InvalidResultText)
-                }
-            }
+            .filter { it.isNotEmpty() }
+            .map { resultText -> UploadResult(userId = uploadData.userId, appChatRoom = uploadData.appChatRoom, speech = resultText) }
             .effect { // NOTE エラーでも成功でも消してしまう。再Tryはもう一度やってもらう
                 speechToTextRepository.deleteFlacFile(flacData)
                 speechToTextRepository.deleteFlacFileToGCP(flacData)
             }
     }
 
-    override suspend fun handleInitialize(userId: String?): Resource<ChatData> {
-        val id = userId ?: UUID.randomUUID().toString()
-        // ユーザ、チャットID作成-> AI応答要求 ->
-        speechToTextRepository.createUserAndChatRoom(id)
-//            .flatMap
-        return TODO()
+    override suspend fun handlePostAiSpeech(aiChatInquired: AiChatInquired): Resource<ChatData> {
+        var cashDbRowRoomId : ChatRoomId = 0
+        val userId = aiChatInquired.userId
+        return when(userId.isEmpty() || aiChatInquired.speech.isEmpty()) {
+            true -> Resource.Failure(AppError.UnKnownError("invalid userId or user message"))
+            else -> getDatabaseRowRoomId(userId, aiChatInquired.getRoomId()).flatMapAsync { dbRowRoomId ->
+                cashDbRowRoomId = dbRowRoomId
+                speechToTextRepository.findChatHistory(userId, dbRowRoomId)
+            }.flatMapAsync { currentChatData ->
+                speechToTextRepository.postConversation(currentChatData.conversation)
+            }.flatMapAsync { aiResponded ->
+                speechToTextRepository.writeConversation(userId, cashDbRowRoomId, aiResponded)
+            }
+        }
+    }
+
+    private suspend fun getFirstUserChatData(): Resource<ChatData> {
+        var cashRoomId : ChatRoomId = 0
+        val userID = UUID.randomUUID().toString()
+        return speechToTextRepository.createUserAndChatRoom(userID)
+            .flatMapAsync { chatRoomId ->
+                cashRoomId = chatRoomId
+                speechToTextRepository.postConversation(null)
+            }
+            .flatMapAsync { aiResponded ->
+                speechToTextRepository.writeConversation(
+                    userId = userID,
+                    chatRoomId = cashRoomId,
+                    conversation = aiResponded
+                )
+            }
+    }
+
+    private suspend fun getCurrentChatData(userID: String, room: ClientChatRoomId): Resource<ChatData> {
+        return speechToTextRepository.findChatRoomsForUser(userID)
+            .flatMapAsync { getDatabaseRowRoomId(userID, room) }
+            .flatMapAsync { speechToTextRepository.findChatHistory(userID, it) }
+    }
+
+    private suspend fun getDatabaseRowRoomId(userId: String, room: ClientChatRoomId): Resource<ChatRoomId> {
+        return speechToTextRepository.findChatRoomsForUser(userId)
+            .map { chatRooms ->
+                when(room) {
+                    ClientChatRoomId.EnglishConversation -> chatRooms.first()
+                    ClientChatRoomId.SearchExpression -> chatRooms[1]
+                    ClientChatRoomId.Unknown -> throw InvalidParameterException("clientChatRoomId is invalid")
+                }
+            }
     }
 }
