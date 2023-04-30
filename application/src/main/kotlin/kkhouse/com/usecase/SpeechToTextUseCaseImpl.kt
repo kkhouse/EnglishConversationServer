@@ -4,12 +4,9 @@ import kkhouse.com.repository.SpeechToTextRepository
 import kkhouse.com.speech.*
 import kkhouse.com.utils.AppError
 import kkhouse.com.utils.Resource
-import mu.KLoggable
-import mu.KLogger
 import mu.KLogging
 import java.security.InvalidParameterException
 import java.util.*
-import kotlin.math.log
 
 class SpeechToTextUseCaseImpl(
     private val speechToTextRepository: SpeechToTextRepository,
@@ -32,7 +29,7 @@ class SpeechToTextUseCaseImpl(
             .flatMap(speechToTextRepository::uploadFlacFileToGCP)
             .flatMap(speechToTextRepository::recognizeSpeech)
             .filter { it.isNotEmpty() }
-            .map { resultText -> UploadResult(userId = uploadData.userId, appChatRoom = uploadData.appChatRoom, speech = resultText) }
+            .map { resultText -> UploadResult(userId = uploadData.userId, appChatRoom = uploadData.getRoomId().value, speech = resultText) }
             .effect { // NOTE エラーでも成功でも消してしまう。再Tryはもう一度やってもらう
                 speechToTextRepository.deleteFlacFile(flacData)
                 speechToTextRepository.deleteFlacFileToGCP(flacData)
@@ -40,52 +37,58 @@ class SpeechToTextUseCaseImpl(
     }
 
     override suspend fun handlePostAiSpeech(aiChatInquired: AiChatInquired): Resource<ChatData> {
-        var cashDbRowRoomId : ChatRoomId = 0
+        lateinit var cashRoomIds : CacheRoomIds
         val userId = aiChatInquired.userId
         return when(userId.isEmpty() || aiChatInquired.speech.isEmpty()) {
             true -> Resource.Failure(AppError.UnKnownError("invalid userId or user message"))
-            else -> getDatabaseRowRoomId(userId, aiChatInquired.getRoomId()).flatMapAsync { dbRowRoomId ->
-                cashDbRowRoomId = dbRowRoomId
-                speechToTextRepository.findChatHistory(userId, dbRowRoomId)
-            }.flatMapAsync { currentChatData ->
-                speechToTextRepository.postConversation(currentChatData.conversation)
-            }.flatMapAsync { aiResponded ->
-                speechToTextRepository.writeConversation(userId, cashDbRowRoomId, aiResponded)
-            }
+            else -> speechToTextRepository.findChatRoomsForUser(userId)
+                .flatMapAsync { roomIds ->
+                    cashRoomIds = CacheRoomIds(roomIds)
+                    speechToTextRepository.findChatHistory(userId, roomIds, aiChatInquired.getRoomId())
+                }.flatMapAsync { currentChatData ->
+                    // 応答要求後に、ユーザの返答を保存する
+                    speechToTextRepository.postConversation(currentChatData.getNewConversation(aiChatInquired.speech))
+                        .tapAsync { _ ->
+                            speechToTextRepository.writeConversation(
+                                userId,
+                                cashRoomIds.getRoomId(aiChatInquired.getRoomId()),
+                                Conversation(Role.User.value, aiChatInquired.speech)
+                            )
+                        }
+                }.flatMapAsync { aiResponded ->
+                    speechToTextRepository.writeConversation(userId, cashRoomIds.getRoomId(aiChatInquired.getRoomId()), aiResponded)
+                }.flatMapAsync {
+                    speechToTextRepository.findChatHistory(userId, cashRoomIds.roomIds, aiChatInquired.getRoomId())
+                }
         }
     }
 
     private suspend fun getFirstUserChatData(): Resource<ChatData> {
-        var cashRoomId : ChatRoomId = 0
+        lateinit var cashRoomIds : CacheRoomIds
         val userID = UUID.randomUUID().toString()
         return speechToTextRepository.createUserAndChatRoom(userID)
             .flatMapAsync { appRoomIds ->
-                cashRoomId = appRoomIds.last()
+                cashRoomIds = CacheRoomIds(appRoomIds)
                 speechToTextRepository.postConversation(null)
             }
             .flatMapAsync { aiResponded ->
                 speechToTextRepository.writeConversation(
                     userId = userID,
-                    chatRoomId = cashRoomId,
+                    chatRoomId = cashRoomIds.getRoomId(ClientChatRoomId.EnglishConversation),
                     conversation = aiResponded
+                )
+            }
+            .flatMapAsync {
+                speechToTextRepository.findChatHistory(
+                    userId = userID,
+                    chatRoomIds = cashRoomIds.roomIds,
+                    target = ClientChatRoomId.EnglishConversation
                 )
             }
     }
 
-    private suspend fun getCurrentChatData(userID: String, room: ClientChatRoomId): Resource<ChatData> {
+    private suspend fun getCurrentChatData(userID: String, target: ClientChatRoomId): Resource<ChatData> {
         return speechToTextRepository.findChatRoomsForUser(userID)
-            .flatMapAsync { getDatabaseRowRoomId(userID, room) }
-            .flatMapAsync { speechToTextRepository.findChatHistory(userID, it) }
-    }
-
-    private suspend fun getDatabaseRowRoomId(userId: String, room: ClientChatRoomId): Resource<ChatRoomId> {
-        return speechToTextRepository.findChatRoomsForUser(userId)
-            .map { chatRooms ->
-                when(room) {
-                    ClientChatRoomId.EnglishConversation -> chatRooms.first()
-                    ClientChatRoomId.SearchExpression -> chatRooms[1]
-                    ClientChatRoomId.Unknown -> throw InvalidParameterException("clientChatRoomId is invalid")
-                }
-            }
+            .flatMapAsync { speechToTextRepository.findChatHistory(userID, it, target) }
     }
 }

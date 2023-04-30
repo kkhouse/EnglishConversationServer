@@ -1,24 +1,24 @@
 package kkhouse.com.di
 
-import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
-import kkhouse.com.ChatLogDataBase
 import kkhouse.com.file.LocalFileManager
 import kkhouse.com.file.LocalFileManagerImpl
 import kkhouse.com.persistent.ChatDataBase
 import kkhouse.com.persistent.ChatDataBaseImpl
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.exposed.sql.Database
 import org.koin.dsl.module
 
 val databaseModule = module {
     single<LocalFileManager> { LocalFileManagerImpl() }
     single<ChatDataBase> {
         ChatDataBaseImpl(
-            ChatLogDataBase(
-                JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY).apply {
-                    ChatLogDataBase.Schema.create(this)
-                }
-            ).chatLogShemeQueries,
-            Dispatchers.IO
+            Dispatchers.IO,
+            Database.connect(
+                url = "jdbc:mysql://localhost:3306/chat_log_database",
+//                driver = "com.mysql.jdbc.Driver",
+                user = System.getenv("DB_USER"),
+                password = System.getenv("DB_PASS")
+            )
         )
     }
 }

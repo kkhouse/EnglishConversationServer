@@ -1,11 +1,13 @@
 package kkhouse.com.mapping
 
+import kkhouse.com.persistent.MessagesAndRolesForUserRoom
 import kkhouse.com.speech.Conversation
+import kkhouse.com.speech.Role
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 
-fun QueryMessagesAndRolesForUserInChatRoom.mapConversation(): Conversation {
+fun MessagesAndRolesForUserRoom.mapConversation(): Conversation {
     return Conversation(
-        role = this.role.toInt(),
+        role = this.getRole().value,
         message = this.message
     )
 }

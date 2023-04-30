@@ -2,6 +2,7 @@ package kkhouse.com.persistent
 
 import kkhouse.com.speech.ChatRoomId
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
+import java.time.LocalDateTime
 
 interface ChatDataBase {
 
@@ -17,7 +18,7 @@ interface ChatDataBase {
     suspend fun queryMessagesAndRolesForUserInChatRoom(
         userId: String,
         chatRoomId: Int
-    ): Result<List<QueryMessagesAndRolesForUserInChatRoom>>
+    ): Result<List<MessagesAndRolesForUserRoom>>
 
 
 
@@ -35,7 +36,7 @@ interface ChatDataBase {
         chatRoomId: Int,
         role: Int,
         message: String,
-        createdAt: Long
+        createdAt: LocalDateTime
     ): Result<Unit>
 
     /*

@@ -9,20 +9,27 @@ import io.ktor.server.routing.*
 import kkhouse.com.speech.ChatData
 import kkhouse.com.speech.UploadResult
 import kkhouse.com.usecase.SpeechToTextUseCase
-import kkhouse.com.utils.AiSpeechError
-import kkhouse.com.utils.AppError
-import kkhouse.com.utils.TextToSpeechError
-import kkhouse.com.utils.forEachAsync
+import kkhouse.com.usecase.SpeechToTextUseCaseImpl
+import kkhouse.com.utils.*
 import mu.KotlinLogging
 import org.koin.java.KoinJavaComponent
+import java.io.File
 import java.io.InputStream
+import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.Path
 
 private val logger = KotlinLogging.logger {}
 
 fun Application.configureRouting() {
     val useCase: SpeechToTextUseCase by KoinJavaComponent.inject(SpeechToTextUseCase::class.java)
     routing {
+        get("/hogehogefmdwoae2") {
+            logger.debug {
+                "print path" +
+                        findModuleRootDirectoryPath(SpeechToTextUseCaseImpl::class.java) + "   : "
+            }
+        }
         post("/initilize") {
             useCase.handleInitialize(initData = call.receive())
                 .forEachAsync(

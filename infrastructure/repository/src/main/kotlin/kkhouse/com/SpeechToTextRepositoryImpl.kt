@@ -9,6 +9,7 @@ import kkhouse.com.exceptions.UnexpectedCompletion
 import kkhouse.com.file.LocalFileManager
 import kkhouse.com.mapping.mapConversation
 import kkhouse.com.persistent.ChatDataBase
+import kkhouse.com.persistent.MessagesAndRolesForUserRoom
 
 import kkhouse.com.repository.SpeechToTextRepository
 import kkhouse.com.repository.TranscriptText
@@ -19,6 +20,7 @@ import kkhouse.com.utils.Resource
 import kkhouse.com.utils.TextToSpeechError
 import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 import toResource
+import java.time.LocalDateTime
 
 class SpeechToTextRepositoryImpl(
     private val speechToText: SpeechToText,
@@ -90,21 +92,12 @@ class SpeechToTextRepositoryImpl(
         userId: String,
         chatRoomId: Int,
         conversation: Conversation,
-    ): Resource<ChatData> {
+    ): Resource<Unit> {
         return chatDatabase.insertChatLogForUserInChatRoom(
             chatRoomId = chatRoomId,
-            role = conversation.role,
+            role = conversation.getRole().value,
             message = conversation.message,
-            createdAt = System.currentTimeMillis()
-        ).combineResult(
-            resultB = chatDatabase.queryMessagesAndRolesForUserInChatRoom(userId, chatRoomId),
-            transformer = { _ , conversationData ->
-                ChatData(
-                    userId = userId,
-                    appChatRoom = chatRoomId,
-                    conversation = conversationData.map(QueryMessagesAndRolesForUserInChatRoom::mapConversation),
-                )
-            }
+            createdAt = LocalDateTime.now()
         ).toResource()
     }
 
@@ -112,13 +105,20 @@ class SpeechToTextRepositoryImpl(
         return chatDatabase.queryChatRoomsForUser(userId).toResource()
     }
 
-    override suspend fun findChatHistory(userId: String, chatRoomId: Int): Resource<ChatData> {
-        return chatDatabase.queryMessagesAndRolesForUserInChatRoom(userId = userId, chatRoomId = chatRoomId)
+    override suspend fun findChatHistory(
+        userId: String,
+        chatRoomIds: List<ChatRoomId>,
+        target: ClientChatRoomId
+    ): Resource<ChatData> {
+        return chatDatabase.queryMessagesAndRolesForUserInChatRoom(
+            userId = userId,
+            chatRoomId = chatRoomIds[target.value]
+        )
             .map { list ->
                 ChatData(
                     userId = userId,
-                    appChatRoom = chatRoomId,
-                    conversation = list.map(QueryMessagesAndRolesForUserInChatRoom::mapConversation)
+                    appChatRoom = target.value,
+                    conversation = list.map(MessagesAndRolesForUserRoom::mapConversation)
                 )
             }.toResource()
     }

@@ -86,12 +86,6 @@ class RequestResponseHandlerImpl(
     private fun systemPrompt(): ChatMessage {
         val filePath = this::class.java.classLoader.getResource("prompt.properties")?.path
         val file = File(filePath)
-
-        if (file.exists() && !file.isDirectory) {
-            println("File exists!!")
-        } else {
-            println("File doesn't exist or program doesn't have access to it")
-        }
         val properties = Properties().apply { file.inputStream().use(this::load) }
         return ChatMessage(role = ChatRole.System, content = properties.getProperty(PROMPT_BEGINNER_KEY))
     }

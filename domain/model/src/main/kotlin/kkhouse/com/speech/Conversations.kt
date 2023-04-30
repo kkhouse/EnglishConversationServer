@@ -11,7 +11,7 @@ typealias ChatRoomId = Int
 @Serializable
 data class InitializedConversation(
     val userId: String?,
-    val appChatRoom: Int?
+    private val appChatRoom: Int?
 ) {
     fun getRoomId(): ClientChatRoomId {
         return ClientChatRoomId.values().find {
@@ -23,13 +23,23 @@ data class InitializedConversation(
 @Serializable
 data class ChatData(
     val userId: String? = null,
-    val appChatRoom: Int? = null,
+    private val appChatRoom: Int? = null,
     val conversation: List<Conversation>? = null,
     val errorCode: Int? = null
-)
+) {
+    fun getRoomId(): ClientChatRoomId {
+        return ClientChatRoomId.values().find {
+            it.value == appChatRoom
+        } ?: throw IllegalStateException("Unexpected appChatRoom value")
+    }
+
+    fun getNewConversation(newUserContent: String): List<Conversation>? {
+        return conversation?.plus(Conversation(Role.User.value, newUserContent))
+    }
+}
 @Serializable
 data class Conversation(
-    val role: Int,
+    private val role: Int,
     val message: String
 ) {
     fun getRole(): Role {
@@ -46,7 +56,7 @@ data class Conversation(
 @Serializable
 data class UploadData(
     val userId: String,
-    val appChatRoom: Int,
+    private val appChatRoom: Int,
     val userFlacData: ByteArray,
 ) {
     fun getRoomId(): ClientChatRoomId {
@@ -76,7 +86,7 @@ data class UploadData(
 @Serializable
 data class UploadResult(
     val userId: String? = null,
-    val appChatRoom: Int? = null,
+    private val appChatRoom: Int? = null,
     val speech: String? = null,
     val errorCode: Int? = null
 )
@@ -88,7 +98,7 @@ data class UploadResult(
 @Serializable
 data class AiChatInquired(
     val userId: String,
-    val appChatRoom: Int,
+    private val appChatRoom: Int,
     val speech: String
 ) {
     fun getRoomId(): ClientChatRoomId {
@@ -105,4 +115,16 @@ enum class ClientChatRoomId(val value: Int) {
 }
 enum class Role(val value: Int) {
     Assistant(0), User(1);
+}
+
+data class CacheRoomIds(
+    val roomIds: List<ChatRoomId>
+) {
+    fun getRoomId(target : ClientChatRoomId): ChatRoomId {
+        return when(target) {
+            ClientChatRoomId.EnglishConversation -> roomIds[0]
+            ClientChatRoomId.SearchExpression -> roomIds[1]
+            ClientChatRoomId.Unknown -> throw IllegalStateException("Unexpected appChatRoom value")
+        }
+    }
 }

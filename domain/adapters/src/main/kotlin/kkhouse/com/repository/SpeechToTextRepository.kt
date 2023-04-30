@@ -29,10 +29,10 @@ interface SpeechToTextRepository {
         userId: String,
         chatRoomId: Int,
         conversation: Conversation
-    ): Resource<ChatData>
+    ): Resource<Unit>
 
     suspend fun findChatRoomsForUser(userId: String): Resource<List<ChatRoomId>>
 
-    suspend fun findChatHistory(userId: String, chatRoomId: Int): Resource<ChatData>
+    suspend fun findChatHistory(userId: String, chatRoomIds: List<ChatRoomId>, target: ClientChatRoomId): Resource<ChatData>
 
 }

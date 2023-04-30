@@ -1,4 +1,5 @@
 val koin_version: String = "3.4.0"
+val exposed_version = "0.40.1"
 plugins {
     kotlin("jvm") version "1.8.20"
     id("app.cash.sqldelight") version "2.0.0-alpha05"
@@ -27,6 +28,13 @@ dependencies {
 
     implementation("io.github.microutils:kotlin-logging:1.7.4")
     implementation("org.slf4j:slf4j-simple:1.7.26")
+
+    implementation("org.jetbrains.exposed", "exposed-core", exposed_version)
+    implementation("org.jetbrains.exposed", "exposed-dao", exposed_version)
+    implementation("org.jetbrains.exposed", "exposed-jdbc", exposed_version)
+    implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
+    implementation("mysql:mysql-connector-java:8.0.33")
+
 }
 
 sqldelight {

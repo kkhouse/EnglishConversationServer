@@ -1,17 +1,18 @@
 package kkhouse.com.persistent
 
 import kkhouse.com.speech.ChatRoomId
-import kkhousecom.ChatLogShemeQueries
-import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mu.KLogging
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inSubQuery
+import org.jetbrains.exposed.sql.transactions.transaction
+import java.time.LocalDateTime
 
 class ChatDataBaseImpl(
-    private val queries: ChatLogShemeQueries,
-    private val dispatcher: CoroutineDispatcher
+    private val dispatcher: CoroutineDispatcher,
+    private val database: Database
 ): ChatDataBase {
 
     companion object : KLogging()
@@ -19,35 +20,54 @@ class ChatDataBaseImpl(
     override suspend fun queryChatRoomsForUser(userId: String): Result<List<ChatRoomId>> {
         return withContext(dispatcher) {
             runCatching {
-                queries.queryChatRoomsForUser(userId).executeAsList().map { it.id.toInt() }
-            }.onSuccess { log() }
+                transaction(database) {
+                    ChatRooms.select { ChatRooms.userId.eq(userId) }
+                        .map { row -> row[ChatRooms.id].value }
+                }
+            }
         }
     }
 
     override suspend fun queryMessagesAndRolesForUserInChatRoom(
         userId: String,
         chatRoomId: Int
-    ): Result<List<QueryMessagesAndRolesForUserInChatRoom>> {
+    ): Result<List<MessagesAndRolesForUserRoom>> {
         return withContext(dispatcher) {
             runCatching {
-                queries.queryMessagesAndRolesForUserInChatRoom(userId, chatRoomId.toLong()).executeAsList()
-            }.onSuccess { log() }
+                transaction (database) {
+                    (ChatLogs innerJoin ChatRooms).slice(ChatLogs.message, ChatLogs.role, ChatLogs.id)
+                        .select { ChatRooms.userId.eq(userId) and ChatLogs.chatRoomId.eq(chatRoomId) }
+                        .map { row ->
+                            MessagesAndRolesForUserRoom(message = row[ChatLogs.message], role = row[ChatLogs.role])
+                        }
+                }
+            }
         }
     }
 
     override suspend fun createUser(userId: String): Result<Unit> {
         return withContext(dispatcher) {
             runCatching {
-                queries.createUser(userId)
-            }.onSuccess { log() }
+                transaction (database) {
+                    Users.insert {
+                        it[Users.userId] = userId
+                    }
+                }
+                Unit
+            }
         }
     }
 
     override suspend fun createChatRoomForUser(userId: String): Result<Unit> {
         return withContext(dispatcher) {
             runCatching {
-                queries.createChatRoomForUser(userId)
-            }.onSuccess { log() }
+                transaction {
+                    ChatRooms.insert {
+                        it[ChatRooms.userId] = userId
+                    }
+                }
+                Unit
+            }
         }
     }
 
@@ -55,40 +75,33 @@ class ChatDataBaseImpl(
         chatRoomId: Int,
         role: Int,
         message: String,
-        createdAt: Long
+        createdAt: LocalDateTime
     ): Result<Unit> {
         return withContext(dispatcher) {
             runCatching {
-                queries.insertChatLogForUserInChatRoom(
-                    chatRoomId.toLong(),
-                    role.toLong(),
-                    message,
-                    createdAt
-                )
-            }.onSuccess { log() }
+                transaction {
+                    ChatLogs.insert {
+                        it[ChatLogs.chatRoomId] = chatRoomId
+                        it[ChatLogs.role] = role
+                        it[ChatLogs.message] = message
+                        it[ChatLogs.createdAt] = createdAt
+                    }
+                }
+                Unit
+            }
         }
     }
 
     override suspend fun deleteUserAndRelatedData(userId: String): Result<Unit> {
         return withContext(dispatcher) {
             runCatching {
-                queries.deleteUserAndRelatedData(userId)
-            }.onSuccess { log() }
-
-        }
-    }
-
-    private fun log() {
-        try {
-            queries.queryAllData().executeAsList().forEachIndexed { index, queryAllData ->
-                logger.info {
-                    "All database value \n" +
-                            "index : $index " +
-                            "queryAll : ${queryAllData.toString()}"
-                }
+                Users.select { Users.userId.eq(userId) }.singleOrNull()?.let { row ->
+                    ChatLogs.deleteWhere { chatRoomId inSubQuery (ChatRooms.slice(ChatRooms.id).select { ChatRooms.userId.eq(userId) }) }
+                    ChatRooms.deleteWhere { ChatRooms.userId.eq(userId) }
+                    Users.deleteWhere { Users.id.eq(row[Users.id].value) }
+                } ?: { throw IllegalArgumentException("delete target user is not existed") }
+                Unit
             }
-        } catch (e: Exception) {
-            logger.error { "allData is null ? : ${e.message}" }
         }
     }
 }

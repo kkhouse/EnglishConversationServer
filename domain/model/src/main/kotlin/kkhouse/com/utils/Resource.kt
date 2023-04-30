@@ -13,7 +13,8 @@ sealed class Resource<out T> {
             is Success -> try {
                 Success(f(this.data))
             } catch (e: Exception) {
-                Failure(AppError.UnKnownError("Resource map function throws exception"))
+                Failure(AppError.UnKnownError("Resource map function throws exception " +
+                        ":  origin error $e: message : ${e.message}"))
             }
             is Failure -> Failure(this.error)
 
@@ -26,7 +27,7 @@ sealed class Resource<out T> {
         return when(this) {
             is Success -> {
                 try { f(this.data) } catch (e: Exception) {
-                    Failure(AppError.UnKnownError("flatmapException")) }
+                    Failure(AppError.UnKnownError("flatmapException :  origin error $e: message : ${e.message}")) }
             }
             is Failure -> Failure(this.error)
         }
@@ -83,7 +84,7 @@ sealed class Resource<out T> {
             is Success -> try {
                 Success(f(this.data))
             } catch (e: Exception) {
-                Failure(AppError.UnKnownError("Resource map function throws exception"))
+                Failure(AppError.UnKnownError("Resource map function throws exception :  origin error $e: message : ${e.message}"))
             }
             is Failure -> Failure(this.error)
         }
@@ -93,7 +94,7 @@ sealed class Resource<out T> {
         return when(this) {
             is Success -> {
                 try { f(this.data) } catch (e: Exception) {
-                    Failure(AppError.UnKnownError("flatmapException")) }
+                    Failure(AppError.UnKnownError("flatmapException:  origin error $e: message : ${e.message}")) }
             }
             is Failure -> Failure(this.error)
 
