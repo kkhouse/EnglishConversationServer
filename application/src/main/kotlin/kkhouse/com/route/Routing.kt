@@ -11,6 +11,7 @@ import kkhouse.com.speech.UploadResult
 import kkhouse.com.usecase.SpeechToTextUseCase
 import kkhouse.com.usecase.SpeechToTextUseCaseImpl
 import kkhouse.com.utils.*
+import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import org.koin.java.KoinJavaComponent
 import java.io.File
@@ -21,15 +22,19 @@ import kotlin.io.path.Path
 
 private val logger = KotlinLogging.logger {}
 
+@Serializable
+data class Entity(
+    val text : String
+)
 fun Application.configureRouting() {
     val useCase: SpeechToTextUseCase by KoinJavaComponent.inject(SpeechToTextUseCase::class.java)
     routing {
-        get("/hogehogefmdwoae2") {
-            logger.debug {
-                "print path" +
-                        findModuleRootDirectoryPath(SpeechToTextUseCaseImpl::class.java) + "   : "
-            }
+        //Test
+        post("/hogehogefmdwoae2") {
+            val result = call.receive<Entity>()
+            call.respond(HttpStatusCode.OK, message = Entity(text = "Hello world"))
         }
+
         post("/initilize") {
             useCase.handleInitialize(initData = call.receive())
                 .forEachAsync(
@@ -80,6 +85,10 @@ fun Application.configureRouting() {
                         logger.error { "AppError : $it , If UnKnownError Message : ${(it as? AppError.UnKnownError)?.message} " }
                     }
                 )
+        }
+
+        post("/textToSpeech") {
+
         }
     }
 }

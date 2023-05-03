@@ -86,7 +86,9 @@ class RequestResponseHandlerImpl(
     private fun systemPrompt(): ChatMessage {
         val filePath = this::class.java.classLoader.getResource("prompt.properties")?.path
         val file = File(filePath)
-        val properties = Properties().apply { file.inputStream().use(this::load) }
+        val properties = Properties().apply {
+            this.load(Thread.currentThread().contextClassLoader.getResourceAsStream("sample.properties"))
+        }
         return ChatMessage(role = ChatRole.System, content = properties.getProperty(PROMPT_BEGINNER_KEY))
     }
 

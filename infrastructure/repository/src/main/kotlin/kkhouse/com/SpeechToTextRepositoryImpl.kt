@@ -1,6 +1,5 @@
 package kkhouse.com
 
-import zip3Result
 import combineResult
 import kkhouse.com.exceptions.EmptyTextException
 import kkhouse.com.exceptions.MultiChunkException
@@ -10,7 +9,6 @@ import kkhouse.com.file.LocalFileManager
 import kkhouse.com.mapping.mapConversation
 import kkhouse.com.persistent.ChatDataBase
 import kkhouse.com.persistent.MessagesAndRolesForUserRoom
-
 import kkhouse.com.repository.SpeechToTextRepository
 import kkhouse.com.repository.TranscriptText
 import kkhouse.com.speech.*
@@ -18,8 +16,8 @@ import kkhouse.com.utils.AiSpeechError
 import kkhouse.com.utils.AppError
 import kkhouse.com.utils.Resource
 import kkhouse.com.utils.TextToSpeechError
-import kkhousecom.QueryMessagesAndRolesForUserInChatRoom
 import toResource
+import zip3Result
 import java.time.LocalDateTime
 
 class SpeechToTextRepositoryImpl(
