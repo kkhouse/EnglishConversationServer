@@ -9,16 +9,13 @@ import io.ktor.server.routing.*
 import kkhouse.com.speech.ChatData
 import kkhouse.com.speech.UploadResult
 import kkhouse.com.usecase.SpeechToTextUseCase
-import kkhouse.com.usecase.SpeechToTextUseCaseImpl
-import kkhouse.com.utils.*
+import kkhouse.com.utils.AiSpeechError
+import kkhouse.com.utils.AppError
+import kkhouse.com.utils.TextToSpeechError
+import kkhouse.com.utils.forEachAsync
 import kotlinx.serialization.Serializable
 import mu.KotlinLogging
 import org.koin.java.KoinJavaComponent
-import java.io.File
-import java.io.InputStream
-import java.nio.file.Paths
-import java.util.*
-import kotlin.io.path.Path
 
 private val logger = KotlinLogging.logger {}
 

@@ -1,6 +1,7 @@
 package kkhouse.com.file
 
 import kkhouse.com.speech.FlacData
+import mu.KotlinLogging
 import org.jaudiotagger.audio.AudioFileIO
 import java.io.File
 import java.nio.file.Files
@@ -8,6 +9,7 @@ import java.nio.file.Paths
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
+private val logger = KotlinLogging.logger {}
 
 class LocalFileManagerImpl (
 ): LocalFileManager {
@@ -41,7 +43,7 @@ class LocalFileManagerImpl (
                 chanelCount = audioFile.audioHeader.channels.toInt(),
                 localFilePath = filePath
             )
-            println("Debug: analyzeFileData is $data")
+            logger.debug { "analyzeFileData is $data" }
             data
         }
     }

@@ -32,7 +32,7 @@ class SpeechToTextUseCaseImpl(
             .map { resultText -> UploadResult(userId = uploadData.userId, appChatRoom = uploadData.getRoomId().value, speech = resultText) }
             .effect { // NOTE エラーでも成功でも消してしまう。再Tryはもう一度やってもらう
                 speechToTextRepository.deleteFlacFile(flacData)
-                speechToTextRepository.deleteFlacFileToGCP(flacData)
+//                speechToTextRepository.deleteFlacFileToGCP(flacData)
             }
     }
 

@@ -14,7 +14,7 @@ val databaseModule = module {
         ChatDataBaseImpl(
             Dispatchers.IO,
             Database.connect(
-                url = "jdbc:mysql://localhost:3306/chat_log_database",
+                url = "jdbc:mysql://localhost:3306/${System.getenv("DB_NAME")}",
 //                driver = "com.mysql.jdbc.Driver",
                 user = System.getenv("DB_USER"),
                 password = System.getenv("DB_PASS")

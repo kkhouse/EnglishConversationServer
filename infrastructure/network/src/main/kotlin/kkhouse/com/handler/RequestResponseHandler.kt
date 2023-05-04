@@ -14,8 +14,7 @@ import kkhouse.com.exceptions.UnexpectedCompletion
 import kkhouse.com.repository.TranscriptText
 import kkhouse.com.speech.Conversation
 import kkhouse.com.speech.Role
-import java.io.File
-import java.util.*
+import kkhouse.com.utils.Const
 
 interface RequestResponseHandler {
     fun handleSpeechToTextResponse(response: RecognizeResponse): Either<Exception, TranscriptText>
@@ -84,12 +83,12 @@ class RequestResponseHandlerImpl(
 
     @OptIn(BetaOpenAI::class)
     private fun systemPrompt(): ChatMessage {
-        val filePath = this::class.java.classLoader.getResource("prompt.properties")?.path
-        val file = File(filePath)
-        val properties = Properties().apply {
-            this.load(Thread.currentThread().contextClassLoader.getResourceAsStream("sample.properties"))
-        }
-        return ChatMessage(role = ChatRole.System, content = properties.getProperty(PROMPT_BEGINNER_KEY))
+//        val filePath = this::class.java.classLoader.getResource("prompt.properties")?.path
+//        val file = File(filePath)
+//        val properties = Properties().apply {
+//            this.load(Thread.currentThread().contextClassLoader.getResourceAsStream("sample.properties"))
+//        }
+        return ChatMessage(role = ChatRole.System, content = Const.Prompt.Beginner)
     }
 
     @OptIn(BetaOpenAI::class)
