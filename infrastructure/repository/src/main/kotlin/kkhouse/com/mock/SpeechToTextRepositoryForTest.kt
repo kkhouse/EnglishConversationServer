@@ -3,7 +3,9 @@ package kkhouse.com.mock
 import kkhouse.com.repository.SpeechToTextRepository
 import kkhouse.com.repository.TranscriptText
 import kkhouse.com.speech.*
+import kkhouse.com.utils.AppError
 import kkhouse.com.utils.Resource
+import kkhouse.com.utils.TextToSpeechError
 import mu.KotlinLogging
 
 private const val mockUserId: String = "userIduserIduserIduserIduserIduserIduserIduserId"
@@ -59,7 +61,8 @@ class SpeechToTextRepositoryForTest(
             "Repository : recognizeSpeech \n" +
                     "requested flacData $flacData"
         }
-        return Resource.Success("mock recognized text")
+        return Resource.Failure(TextToSpeechError.InvalidResultText)
+//        Resource.Success("mock recognized text")
     }
 
     override suspend fun postConversation(conversation: List<Conversation>?): Resource<Conversation> {
