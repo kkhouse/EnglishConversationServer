@@ -7,7 +7,7 @@ data class FlacData(
     val sampleRate: Int = 0,
     val chanelCount: Int = 1,
     val localFilePath: String ="",
-    val language: String = "en-US"
+    val language: String = "ja-JP"
 )
 
 

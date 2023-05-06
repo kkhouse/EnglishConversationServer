@@ -61,8 +61,8 @@ class SpeechToTextRepositoryForTest(
             "Repository : recognizeSpeech \n" +
                     "requested flacData $flacData"
         }
-        return Resource.Failure(TextToSpeechError.InvalidResultText)
-//        Resource.Success("mock recognized text")
+//        return Resource.Failure(TextToSpeechError.InvalidResultText)
+        return Resource.Success("mock recognized text")
     }
 
     override suspend fun postConversation(conversation: List<Conversation>?): Resource<Conversation> {

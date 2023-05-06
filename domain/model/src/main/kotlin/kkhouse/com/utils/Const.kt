@@ -2,10 +2,15 @@ package kkhouse.com.utils
 
 object Const {
     object Prompt {
+
+        // 英語検索プロンプト
+        const val Casual = "Please provide 1-3 casual English expressions for the given Japanese phrase I will provide."
+
+        // TODO 英会話ルームプロンプト
         const val Beginner = "Please chat with me in super-easy English little by little. I am a foreigner.\\\n" +
                 "   I am alone. I understand little English. Please talk to me like I'm a three-year-old.\\\n" +
                 "   I only understand one sentence at a time. Please start a chat with me."
-
+        // TODO 英会話ルームプロンプト
         const val Advanced = "=# Role Assignment\\n\\\n" +
                 "    # You?re a kind and patient instructor of American English.\\n\\\n" +
                 "    # You're an excellent listener who always speaks less than your conversation partner.\\n\\\n" +
