@@ -21,6 +21,9 @@ repositories {
 }
 
 dependencies {
+    /*
+    TODO VersionCatalog移行
+     */
     implementation(project(":application"))
     implementation(project(":domain:model"))
     implementation(project(":domain:adapters"))

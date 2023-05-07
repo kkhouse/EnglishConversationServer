@@ -37,7 +37,7 @@ class SpeechToTextUseCaseImpl(
     }
 
     override suspend fun handlePostAiSpeech(aiChatInquired: AiChatInquired): Resource<ChatData> {
-        lateinit var cashRoomIds : CacheRoomIds
+        lateinit var cashRoomIds : CacheRoomIds // TODO 副作用なのでスコープに注意。可能なら引数で渡していけるように改修
         val userId = aiChatInquired.userId
         return when(userId.isEmpty() || aiChatInquired.speech.isEmpty()) {
             true -> Resource.Failure(AppError.UnKnownError("invalid userId or user message"))
@@ -64,7 +64,7 @@ class SpeechToTextUseCaseImpl(
     }
 
     private suspend fun getFirstUserChatData(): Resource<ChatData> {
-        lateinit var cashRoomIds : CacheRoomIds
+        lateinit var cashRoomIds : CacheRoomIds // TODO 副作用なのでスコープに注意。可能なら引数で渡していけるように改修
         val userID = UUID.randomUUID().toString()
         return speechToTextRepository.createUserAndChatRoom(userID)
             .flatMapAsync { appRoomIds ->

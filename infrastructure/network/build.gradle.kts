@@ -15,6 +15,9 @@ repositories {
 }
 
 dependencies {
+    /*
+    TODO VersionCatalog移行
+     */
     implementation(project(":domain:model"))
     implementation(project(":domain:adapters"))
     implementation("io.ktor:ktor-client-core:$ktor_version")

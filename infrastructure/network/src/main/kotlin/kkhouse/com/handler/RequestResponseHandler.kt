@@ -17,10 +17,11 @@ import kkhouse.com.speech.Role
 import kkhouse.com.utils.Const
 
 interface RequestResponseHandler {
+    // MEMO :Leftの型がExceptionなのでResultでよかったかも
     fun handleSpeechToTextResponse(response: RecognizeResponse): Either<Exception, TranscriptText>
 
     fun createChatRequest(conversation: List<Conversation>?): ChatCompletionRequest
-
+    // MEMO :Leftの型がExceptionなのでResultでよかったかも
     fun handleChatResponse(chatCompletion: ChatCompletion): Either<Exception, Conversation>
 }
 
@@ -54,7 +55,7 @@ class RequestResponseHandlerImpl(
                 /*
                 TODO 英会話の場合は最後の6つを記憶しておく
                     検索の場合は最新のユーザの応答で良い
-                    このロジックを分けられるようにする
+                    このロジックを分けるためにChatRoomIdをここに登らせる必要がある
                  */
 //                // NOTE: トークン節約のため最後の6つの会話を送る
 //                else -> listOf(systemPrompt()) + conversation.takeLast(6).map(::toChatMessageRequest)
@@ -89,6 +90,7 @@ class RequestResponseHandlerImpl(
 
     @OptIn(BetaOpenAI::class)
     private fun systemPrompt(): ChatMessage {
+        // TODO プロパティから値が取れない・・
 //        val filePath = this::class.java.classLoader.getResource("prompt.properties")?.path
 //        val file = File(filePath)
 //        val properties = Properties().apply {

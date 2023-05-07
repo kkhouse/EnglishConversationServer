@@ -14,6 +14,9 @@ repositories {
 }
 
 dependencies {
+    /*
+    TODO VersionCatalog移行
+     */
     implementation(project(":domain:model"))
     implementation("io.insert-koin:koin-core:$koin_version")
     implementation("net.jthink:jaudiotagger:3.0.1")

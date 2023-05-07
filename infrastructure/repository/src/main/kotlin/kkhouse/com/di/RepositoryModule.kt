@@ -7,7 +7,7 @@ import org.koin.dsl.module
 
 val repositoryModule = module {
     single<SpeechToTextRepository> {
-//        SpeechToTextRepositoryForTest()
+//        SpeechToTextRepositoryForTest()　// NOTE こっちにすると mock responseが返せる
         SpeechToTextRepositoryImpl(get(), get(), get())
     }
 }

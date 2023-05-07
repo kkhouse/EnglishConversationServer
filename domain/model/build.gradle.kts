@@ -12,6 +12,9 @@ repositories {
 }
 
 dependencies {
+    /*
+    TODO VersionCatalog移行
+     */
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktor_version")
 
 }
