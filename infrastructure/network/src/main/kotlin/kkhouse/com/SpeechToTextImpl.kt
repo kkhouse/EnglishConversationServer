@@ -23,15 +23,11 @@ class SpeechToTextImpl(
     private val client: SpeechClient,
     private val storage: Storage,
     private val openAi: OpenAI,
-    private val handler: RequestResponseHandler
+    private val handler: RequestResponseHandler,
+    private val bucketName: String?,
 ): SpeechToText {
 
-    companion object : KLogging() {
-        // The ID of your GCS bucket
-        const val bucketName = "english-conversation-backet"
-
-        const val projectId = "english-conversation-app"
-    }
+    companion object : KLogging() {}
 
     override fun uploadFlacFileOnGCP(flacData: FlacData): Result<FlacData> {
         return runCatching {

@@ -7,12 +7,12 @@ import com.google.cloud.speech.v1.SpeechClient
 import com.google.cloud.storage.StorageOptions
 import kkhouse.com.SpeechToText
 import kkhouse.com.SpeechToTextImpl
-import kkhouse.com.SpeechToTextImpl.Companion.projectId
 import kkhouse.com.handler.RequestResponseHandler
 import kkhouse.com.handler.RequestResponseHandlerImpl
 import org.koin.dsl.module
 
 val networkModule = module {
+    val projectId: String? = System.getenv("PROJETC_ID")
     single { SpeechClient.create() }
     single {
        StorageOptions.newBuilder().setProjectId(projectId).build().service
@@ -29,6 +29,12 @@ val networkModule = module {
         RequestResponseHandlerImpl()
     }
    single<SpeechToText> {
-       SpeechToTextImpl(get(), get(), get(), get())
+       SpeechToTextImpl(
+           get(),
+           get(),
+           get(),
+           get(),
+           System.getenv("BUCKET_NAME"),
+       )
    }
 }
