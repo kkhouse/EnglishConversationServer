@@ -1,5 +1,25 @@
 package kkhouse.com.utils
 
+
+/**
+ * 自作
+ * Success,Errorという処理結果を表現する。
+ * 以下のように処理をストリームで表現できる。どこかのfunctionで処理が失敗した場合はErrorになり
+ * 以降の中間ストリームはスキップされonFailureに流れる。
+ *
+ * Ex.
+ * Resource.ofAsync{ getAnyData() }
+ *      .mapAsync(::transformerFunction) // getAnyDataを加工して下流に流す
+ *     .tapAsync(::effectFunction) // なんらかの副作用を起こす EX.DB保存などのグローバル更新
+ *     .flatMapAsync(::transformerFunctionReturningMonadResult)
+ *     .forEachAsync( // 値の取り出し
+            onFailure = { error -> chanel.send(errorhoge)},
+            onSuccess = { data -> emit(data) },
+ *     )
+ *
+ * 値コンストラクタ（Success,Failure)は二つなのでEitherでも良さそうだが、
+ * 「Loading」という型を追加するかもしれないので作成
+ */
 sealed class Resource<out T> {
     data class Success<T>(
         val data : T,

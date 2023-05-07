@@ -3,9 +3,7 @@ package kkhouse.com.mock
 import kkhouse.com.repository.SpeechToTextRepository
 import kkhouse.com.repository.TranscriptText
 import kkhouse.com.speech.*
-import kkhouse.com.utils.AppError
 import kkhouse.com.utils.Resource
-import kkhouse.com.utils.TextToSpeechError
 import mu.KotlinLogging
 
 private const val mockUserId: String = "userIduserIduserIduserIduserIduserIduserIduserId"
